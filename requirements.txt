@@ -1,0 +1,9 @@
+django==5.2.8
+psycopg2-binary==2.9.11
+dj-database-url==3.0.1
+cloudinary==1.47.0
+django-cloudinary-storage==0.3.0
+python-dotenv==1.0.1
+whitenoise==6.11.0
+pillow==11.0.0
+gunicorn==23.0.0
