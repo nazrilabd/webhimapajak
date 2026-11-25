@@ -75,14 +75,21 @@
     <div class="bg-amber-50 border border-brand-yellow/40 rounded-xl p-3 mb-5 text-xs text-amber-950 flex items-start gap-2.5">
       <i class="fa-solid fa-circle-info text-brand-navy mt-0.5"></i>
       <div>
-        <span class="font-bold">Akses Instan Pengurus:</span>
-        Kredensial otomatis terisi di bawah. Anda dapat langsung menekan tombol masuk menuju panel admin.
+        <span class="font-bold">Akses Pengurus HIMA:</span>
+        Pilih simulasi akun di atas atau masukkan kredensial admin Anda untuk login ke dashboard.
       </div>
+    </div>
+
+    <!-- Error Alert Box -->
+    <div id="login-error-box" class="{% if not error %}hidden{% endif %} bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl p-3 mb-5 flex items-start gap-2.5">
+      <i class="fa-solid fa-triangle-exclamation text-rose-500 mt-0.5"></i>
+      <span id="login-error-text">{{ error|default:"" }}</span>
     </div>
 
     <!-- Form -->
     <form action="/login/" method="POST" onsubmit="handleLogin(event)" class="space-y-4">
       {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next|default:'' }}">
       <div>
         <label class="block text-xs font-bold text-slate-700 mb-1">Email Pengurus / NIM</label>
         <div class="relative">
@@ -144,6 +151,16 @@
       e.preventDefault();
       const form = e.target;
       const formData = new FormData(form);
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const errorBox = document.getElementById('login-error-box');
+      const errorText = document.getElementById('login-error-text');
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Memverifikasi...</span>';
+      }
+      if (errorBox) errorBox.classList.add('hidden');
+
       try {
         const res = await fetch('/login/', {
           method: 'POST',
@@ -151,13 +168,27 @@
           headers: { 'X-Requested-With': 'XMLHttpRequest' }
         });
         const data = await res.json();
-        if (data.redirect) {
-          window.location.href = data.redirect;
+        if (res.ok && data.status === 'success') {
+          window.location.href = data.redirect || '/admin-dashboard/';
         } else {
-          window.location.href = '/admin-dashboard/';
+          if (errorBox && errorText) {
+            errorText.innerText = data.message || 'Email atau kata sandi tidak valid.';
+            errorBox.classList.remove('hidden');
+          }
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> <span>Masuk Dashboard Admin</span>';
+          }
         }
       } catch(err) {
-        window.location.href = '/admin-dashboard/';
+        if (errorBox && errorText) {
+          errorText.innerText = 'Terjadi kesalahan jaringan atau server. Silakan coba lagi.';
+          errorBox.classList.remove('hidden');
+        }
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> <span>Masuk Dashboard Admin</span>';
+        }
       }
     }
   </script>

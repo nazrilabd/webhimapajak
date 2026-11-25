@@ -184,3 +184,11 @@ MEDIA_URL = '/media/'   # digunakan sebagai fallback lokal
 # DEFAULT PRIMARY KEY
 # ─────────────────────────────────────────────
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ─────────────────────────────────────────────
+# AUTHENTICATION REDIRECTS
+# ─────────────────────────────────────────────
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/admin-dashboard/'
+LOGOUT_REDIRECT_URL = '/login/'
+

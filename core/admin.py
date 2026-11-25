@@ -2,9 +2,19 @@ from django.contrib import admin
 from .models import (
     OrganizationProfile, PengurusStruktur, DivisiStruktur, Anggota, ArsipPeriode,
     ProgramKerja, TransaksiKas, FormulirOnline, KategoriFormulir, ResponFormulir,
-    AspirasiMahasiswa, AspirasiFormConfig, Berita, GaleriKegiatan, PesanKontak,
+    AspirasiMahasiswa, AspirasiFormConfig, Berita, KategoriBerita, GaleriKegiatan, KategoriGaleri, PesanKontak,
     SertifikatDigital, PresensiDigital, AuditLog
 )
+
+@admin.register(KategoriBerita)
+class KategoriBeritaAdmin(admin.ModelAdmin):
+    list_display = ('nama', 'urutan')
+    search_fields = ('nama',)
+
+@admin.register(KategoriGaleri)
+class KategoriGaleriAdmin(admin.ModelAdmin):
+    list_display = ('nama', 'urutan')
+    search_fields = ('nama',)
 
 @admin.register(DivisiStruktur)
 class DivisiStrukturAdmin(admin.ModelAdmin):

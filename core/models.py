@@ -481,6 +481,21 @@ class AspirasiMahasiswa(models.Model):
         return f"Aspirasi #{self.id} ({self.kategori}) - {self.pengirim}"
 
 
+class KategoriBerita(models.Model):
+    nama = models.CharField(max_length=100, unique=True)
+    deskripsi = models.TextField(blank=True, default='')
+    urutan = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['urutan', 'nama']
+        verbose_name = 'Kategori Berita'
+        verbose_name_plural = 'Kategori Berita'
+
+    def __str__(self):
+        return self.nama
+
+
 class Berita(models.Model):
     judul = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True)
@@ -505,6 +520,21 @@ class Berita(models.Model):
         if self.gambar_sampul:
             return self.gambar_sampul.url
         return self.gambar_sampul_url or 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80'
+
+
+class KategoriGaleri(models.Model):
+    nama = models.CharField(max_length=100, unique=True)
+    deskripsi = models.TextField(blank=True, default='')
+    urutan = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['urutan', 'nama']
+        verbose_name = 'Kategori Galeri'
+        verbose_name_plural = 'Kategori Galeri'
+
+    def __str__(self):
+        return self.nama
 
 
 class GaleriKegiatan(models.Model):

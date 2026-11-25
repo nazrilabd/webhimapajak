@@ -1,129 +1,8 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ berita.judul }} - HIMA PERPAJAKAN UIMANDIRI</title>
-  <meta name="description" content="{{ berita.ringkasan|truncatechars:160 }}">
-  
-  <!-- Open Graph / Meta Share -->
-  <meta property="og:title" content="{{ berita.judul }}">
-  <meta property="og:description" content="{{ berita.ringkasan|truncatechars:160 }}">
-  <meta property="og:image" content="{{ berita.get_gambar }}">
-  <meta property="og:type" content="article">
+{% extends 'base.html' %}
 
-  <!-- Google Fonts: Plus Jakarta Sans -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Font Awesome CDN -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% block title %}Struktur Kepengurusan - {{ profile.nama_organisasi|default:"HIMA PERPAJAKAN UIMANDIRI" }}{% endblock %}
 
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              navy: '#002B5C',
-              navyLight: '#083d7c',
-              navyDark: '#001b3b',
-              yellow: '#F5C400',
-              yellowHover: '#e0b300',
-              yellowLight: '#fff9e6'
-            }
-          },
-          fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-    }
-    .article-content p {
-      margin-bottom: 1.25rem;
-      line-height: 1.8;
-    }
-  </style>
-</head>
-<body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen">
-
-  <!-- TOP BAR -->
-  <div class="bg-brand-navyDark text-slate-300 text-xs px-4 py-2 border-b border-white/10 flex flex-wrap items-center justify-between gap-2 z-50">
-    <div class="flex items-center space-x-3">
-      <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-brand-yellow text-slate-950">
-        <i class="fa-solid fa-scale-balanced mr-1"></i> HIMA PERPAJAKAN
-      </span>
-      <span class="hidden md:inline text-slate-300">
-        <i class="fa-solid fa-building-columns mr-1 text-brand-yellow"></i> Program Studi Perpajakan - Universitas Insan Mandiri (UIMANDIRI)
-      </span>
-    </div>
-    <div class="flex items-center space-x-3">
-      <a href="https://wa.me/{{ profile.no_whatsapp }}?text=Halo%20Sekretariat%20HIMA%20Perpajakan" target="_blank" class="text-slate-300 hover:text-brand-yellow transition flex items-center gap-1">
-        <i class="fa-brands fa-whatsapp text-emerald-400"></i> <span class="hidden sm:inline">{{ profile.no_whatsapp }}</span>
-      </a>
-      <span class="text-slate-600">|</span>
-      <a href="/" class="px-2.5 py-0.5 rounded bg-brand-yellow text-slate-950 font-bold transition">Portal Utama</a>
-      <a href="/admin-dashboard/" class="px-2.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white transition flex items-center gap-1 font-semibold">
-        <i class="fa-solid fa-gauge-high text-brand-yellow"></i> Admin
-      </a>
-    </div>
-  </div>
-
-  <!-- MAIN HEADER / NAVBAR -->
-  <header class="sticky top-0 z-40 bg-brand-navy/95 backdrop-blur-md text-white shadow-lg border-b border-white/10">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-20">
-        
-        <!-- Logo HIMA Perpajakan -->
-        <a href="/" class="flex items-center gap-3 group shrink-0">
-          <div class="w-11 h-11 rounded-xl bg-brand-yellow flex items-center justify-center text-brand-navy font-black text-2xl shadow-md group-hover:scale-105 transition">
-            <i class="fa-solid fa-scale-balanced"></i>
-          </div>
-          <div>
-            <div class="font-black text-base md:text-lg tracking-wider leading-tight text-white flex items-center gap-1.5">
-              HIMA <span class="text-brand-yellow">PERPAJAKAN</span>
-            </div>
-            <div class="text-[10px] text-slate-300 tracking-wider font-semibold uppercase">
-              UIMANDIRI &bull; Coretax Ready
-            </div>
-          </div>
-        </a>
-
-        <!-- Navigation Links -->
-        <nav class="hidden md:flex items-center space-x-2 text-sm font-semibold">
-          <a href="/" class="px-3 py-2 rounded-lg hover:text-brand-yellow hover:bg-white/5 transition">
-            <i class="fa-solid fa-house mr-1 text-xs"></i> Beranda
-          </a>
-          <a href="/#profil" class="px-3 py-2 rounded-lg hover:text-brand-yellow hover:bg-white/5 transition">Tentang</a>
-          <a href="/#proker" class="px-3 py-2 rounded-lg hover:text-brand-yellow hover:bg-white/5 transition">Program Kerja</a>
-          <a href="/#anggaran" class="px-3 py-1.5 rounded-lg text-brand-yellow bg-brand-yellow/10 border border-brand-yellow/30 hover:bg-brand-yellow/20 transition font-bold">
-            <i class="fa-solid fa-coins mr-1"></i> Transparansi Kas
-          </a>
-          <a href="/#berita" class="px-3 py-2 rounded-lg text-brand-yellow hover:bg-white/5 transition font-bold">
-            Warta Berita
-          </a>
-          <a href="/#formulir" class="px-3 py-2 rounded-lg hover:text-brand-yellow hover:bg-white/5 transition">Layanan & Formulir</a>
-          <a href="/#kontak" class="px-3 py-2 rounded-lg hover:text-brand-yellow hover:bg-white/5 transition">Kontak</a>
-        </nav>
-
-        <!-- Right CTA Button -->
-        <div class="flex items-center gap-3">
-          <a href="/#berita" class="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition border border-white/20">
-            <i class="fa-solid fa-arrow-left"></i> Semua Warta
-          </a>
-        </div>
-
-      </div>
-    </div>
-  </header>
+{% block content %}
 
   <!-- BREADCRUMBS & TOP TITLE BAR -->
   <div class="bg-gradient-to-b from-brand-navyDark to-brand-navy text-white pt-8 pb-12 border-b border-white/10">
@@ -372,64 +251,6 @@
     </div>
   </main>
 
-  <!-- FOOTER -->
-  <footer class="bg-brand-navy text-white pt-14 pb-8 border-t border-brand-navyLight mt-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 pb-12 border-b border-white/10">
-        
-        <!-- Col 1: Brand Info -->
-        <div class="lg:col-span-5 space-y-4">
-          <div class="flex items-center gap-3">
-            <div class="w-11 h-11 rounded-xl bg-brand-yellow flex items-center justify-center text-brand-navy font-black text-2xl">
-              <i class="fa-solid fa-scale-balanced"></i>
-            </div>
-            <div>
-              <div class="font-black text-base tracking-wider text-white">{{ profile.nama_organisasi }}</div>
-              <div class="text-[11px] text-slate-300">Universitas Insan Mandiri (UIMANDIRI)</div>
-            </div>
-          </div>
-          <p class="text-xs text-slate-300 leading-relaxed max-w-sm">
-            {{ profile.deskripsi }}
-          </p>
-        </div>
-
-        <!-- Col 2: Navigasi Cepat -->
-        <div class="lg:col-span-3 space-y-3">
-          <div class="text-xs font-black text-brand-yellow uppercase tracking-wider">Navigasi Utama</div>
-          <ul class="text-xs space-y-2 text-slate-300">
-            <li><a href="/" class="hover:text-brand-yellow transition">Beranda Utama</a></li>
-            <li><a href="/#profil" class="hover:text-brand-yellow transition">Profil & Visi Misi</a></li>
-            <li><a href="/#proker" class="hover:text-brand-yellow transition">Program Kerja 2026/2027</a></li>
-            <li><a href="/#anggaran" class="hover:text-brand-yellow transition">Transparansi Arus Kas</a></li>
-            <li><a href="/#berita" class="hover:text-brand-yellow transition">Warta Berita & Artikel</a></li>
-            <li><a href="/#formulir" class="hover:text-brand-yellow transition">Formulir Pendaftaran Online</a></li>
-          </ul>
-        </div>
-
-        <!-- Col 3: Kontak Sekretariat -->
-        <div class="lg:col-span-4 space-y-3">
-          <div class="text-xs font-black text-brand-yellow uppercase tracking-wider">Sekretariat Ormawa</div>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            {{ profile.alamat }}
-          </p>
-          <div class="text-xs text-slate-300 space-y-1 pt-1">
-            <div><strong class="text-white">Email:</strong> {{ profile.email }}</div>
-            <div><strong class="text-white">WhatsApp:</strong> {{ profile.no_whatsapp }}</div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Copyright -->
-      <div class="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
-        <div>&copy; 2026 {{ profile.nama_organisasi }}. Hak Cipta Dilindungi Undang-Undang.</div>
-        <div class="flex items-center gap-4">
-          <a href="/login/" class="hover:text-brand-yellow transition font-semibold"><i class="fa-solid fa-lock mr-1"></i> Panel Pengurus</a>
-        </div>
-      </div>
-    </div>
-  </footer>
-
   <!-- Script Copy Link -->
   <script>
     function copyArticleLink() {
@@ -445,5 +266,8 @@
       });
     }
   </script>
-</body>
-</html>
+
+
+
+
+{% endblock %}

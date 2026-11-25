@@ -1,4 +1,5 @@
 import json
+from functools import wraps
 from decimal import Decimal
 from datetime import date, datetime
 from django.shortcuts import render, redirect, get_object_or_404
@@ -14,7 +15,7 @@ from django.utils import timezone
 from .models import (
     OrganizationProfile, PengurusStruktur, DivisiStruktur, Anggota, ArsipPeriode,
     ProgramKerja, TransaksiKas, FormulirOnline, KategoriFormulir, ResponFormulir,
-    AspirasiMahasiswa, AspirasiFormConfig, Berita, GaleriKegiatan, PesanKontak,
+    AspirasiMahasiswa, AspirasiFormConfig, Berita, KategoriBerita, GaleriKegiatan, KategoriGaleri, PesanKontak,
     SertifikatDigital, PresensiDigital, AuditLog
 )
 
@@ -525,9 +526,38 @@ def api_submit_presensi(request):
 # 3. AUTHENTICATION (LOGIN & LOGOUT)
 # ─────────────────────────────────────────────────────────────
 
+def admin_required(view_func):
+    """
+    Decorator yang mewajibkan pengguna login sebagai admin/staff.
+    Jika belum login, redirect ke halaman login dengan query parameter 'next'.
+    Jika request berupa AJAX/API, mengembalikan JSON 401 Unauthorized.
+    """
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.path.startswith('/admin-api/'):
+                return JsonResponse({'status': 'error', 'message': 'Autentikasi admin diperlukan. Silakan login terlebih dahulu.'}, status=401)
+            return redirect(f'/login/?next={request.path}')
+        if not (request.user.is_staff or request.user.is_superuser):
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.path.startswith('/admin-api/'):
+                return JsonResponse({'status': 'error', 'message': 'Akses ditolak. Akun bukan administrator.'}, status=403)
+            logout(request)
+            return redirect('/login/?error=unauthorized')
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+
 def login_view(request):
-    if request.user.is_authenticated:
-        return redirect('admin_dashboard')
+    next_url = request.GET.get('next') or request.POST.get('next') or '/admin-dashboard/'
+    if not next_url.startswith('/'):
+        next_url = '/admin-dashboard/'
+
+    if request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser):
+        return redirect(next_url)
+
+    error_msg = None
+    if request.GET.get('error') == 'unauthorized':
+        error_msg = 'Akun Anda tidak memiliki hak akses administrator.'
 
     if request.method == 'POST':
         identifier = request.POST.get('email', '').strip()
@@ -540,33 +570,25 @@ def login_view(request):
         if not user_obj:
             user_obj = User.objects.filter(username__iexact=identifier).first()
 
-        # Demo shortcut: if password is blank or matches dummy or admin123
-        if user_obj and (password == 'admin123' or password == '••••••••••••' or not password):
-            login(request, user_obj)
-            log_audit(user_obj.get_full_name() or user_obj.username, 'Login ke Admin Dashboard', '', request)
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('is_ajax'):
-                return JsonResponse({'status': 'success', 'redirect': '/admin-dashboard/'})
-            return redirect('admin_dashboard')
-
-        # Normal Django authentication
+        user = None
         if user_obj:
+            # If the user selected role with dummy placeholder password, use the account password
+            if password == '••••••••••••':
+                password = 'admin123'
             user = authenticate(request, username=user_obj.username, password=password)
-            if user:
-                login(request, user)
-                log_audit(user.get_full_name() or user.username, 'Login ke Admin Dashboard', '', request)
-                if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('is_ajax'):
-                    return JsonResponse({'status': 'success', 'redirect': '/admin-dashboard/'})
-                return redirect('admin_dashboard')
 
-        # Fallback for demo users
-        admin_fallback = User.objects.filter(is_superuser=True).first()
-        if admin_fallback:
-            login(request, admin_fallback)
-            return redirect('admin_dashboard')
+        if user and user.is_active and (user.is_staff or user.is_superuser):
+            login(request, user)
+            log_audit(user.get_full_name() or user.username, 'Login ke Admin Dashboard', '', request)
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('is_ajax'):
+                return JsonResponse({'status': 'success', 'redirect': next_url})
+            return redirect(next_url)
+        else:
+            error_msg = 'Email/Username atau kata sandi salah. Silakan coba lagi.'
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('is_ajax'):
+                return JsonResponse({'status': 'error', 'message': error_msg}, status=400)
 
-        return render(request, 'login.html', {'error': 'Kredensial tidak valid. Silakan coba lagi.'})
-
-    return render(request, 'login.html')
+    return render(request, 'login.html', {'error': error_msg, 'next': next_url})
 
 
 def logout_view(request):
@@ -581,12 +603,6 @@ def logout_view(request):
 # ─────────────────────────────────────────────────────────────
 
 def get_admin_full_context(request):
-    # Auto-login demo admin if not authenticated so user can access directly
-    if not request.user.is_authenticated:
-        demo_user = User.objects.filter(is_superuser=True).first()
-        if demo_user:
-            login(request, demo_user)
-
     profile = OrganizationProfile.objects.first()
     if not profile:
         profile = OrganizationProfile.objects.create()
@@ -603,7 +619,9 @@ def get_admin_full_context(request):
     arsip_list = ArsipPeriode.objects.all().prefetch_related('pengurus_list').order_by('order_index', '-id')
     proker_list = ProgramKerja.objects.all().order_by('-id')
     berita_list = Berita.objects.all().order_by('-tanggal', '-id')
+    kategori_berita_list = KategoriBerita.objects.all().order_by('urutan', 'nama')
     galeri_list = GaleriKegiatan.objects.all().order_by('-tanggal_kegiatan', '-id')
+    kategori_galeri_list = KategoriGaleri.objects.all().order_by('urutan', 'nama')
     sertifikat_list = SertifikatDigital.objects.all().order_by('-id')
     presensi_list = PresensiDigital.objects.all().order_by('-id')
     pesan_kontak_list = PesanKontak.objects.all().order_by('-id')
@@ -718,7 +736,9 @@ def get_admin_full_context(request):
         'arsip_list': arsip_list,
         'proker_list': proker_list,
         'berita_list': berita_list,
+        'kategori_berita_list': kategori_berita_list,
         'galeri_list': galeri_list,
+        'kategori_galeri_list': kategori_galeri_list,
         'sertifikat_list': sertifikat_list,
         'presensi_list': presensi_list,
         'pesan_kontak_list': pesan_kontak_list,
@@ -727,6 +747,7 @@ def get_admin_full_context(request):
         'kas_chart_json': json.dumps(kas_chart_data),
     }
 
+@admin_required
 def admin_dashboard_view(request):
     tab = request.GET.get('tab')
     if tab:
@@ -754,72 +775,84 @@ def admin_dashboard_view(request):
     context['page_title'] = 'Dashboard & Statistik Organisasi'
     return render(request, 'admin/pages/dashboard.html', context)
 
+@admin_required
 def admin_anggaran_view(request):
     context = get_admin_full_context(request)
     context['active_menu'] = 'anggaran'
     context['page_title'] = 'Transparansi & Buku Kas Bendahara'
     return render(request, 'admin/pages/anggaran.html', context)
 
+@admin_required
 def admin_formulir_view(request):
     context = get_admin_full_context(request)
     context['active_menu'] = 'formulir'
     context['page_title'] = 'Sistem Formulir Online & Respon'
     return render(request, 'admin/pages/formulir.html', context)
 
+@admin_required
 def admin_aspirasi_view(request):
     context = get_admin_full_context(request)
     context['active_menu'] = 'aspirasi'
     context['page_title'] = 'Kritik, Saran & Aspirasi Mahasiswa'
     return render(request, 'admin/pages/aspirasi.html', context)
 
+@admin_required
 def admin_anggota_view(request):
     context = get_admin_full_context(request)
     context['active_menu'] = 'anggota'
     context['page_title'] = 'Manajemen Data Mahasiswa Seluruh Pajak'
     return render(request, 'admin/pages/anggota.html', context)
 
+@admin_required
 def admin_struktur_view(request):
     context = get_admin_full_context(request)
     context['active_menu'] = 'struktur'
     context['page_title'] = 'Kelola Struktur Kepengurusan Aktif'
     return render(request, 'admin/pages/struktur.html', context)
 
+@admin_required
 def admin_arsip_view(request):
     context = get_admin_full_context(request)
     context['active_menu'] = 'arsip'
     context['page_title'] = 'Arsip Periode Kepengurusan (2023-2027)'
     return render(request, 'admin/pages/arsip.html', context)
 
+@admin_required
 def admin_proker_view(request):
     context = get_admin_full_context(request)
     context['active_menu'] = 'proker'
     context['page_title'] = 'Kelola Program Kerja & Kegiatan'
     return render(request, 'admin/pages/proker.html', context)
 
+@admin_required
 def admin_berita_view(request):
     context = get_admin_full_context(request)
     context['active_menu'] = 'berita'
     context['page_title'] = 'Berita & Pengumuman Perpajakan'
     return render(request, 'admin/pages/berita.html', context)
 
+@admin_required
 def admin_galeri_view(request):
     context = get_admin_full_context(request)
     context['active_menu'] = 'galeri'
     context['page_title'] = 'Kelola Galeri & Dokumentasi'
     return render(request, 'admin/pages/galeri.html', context)
 
+@admin_required
 def admin_profil_view(request):
     context = get_admin_full_context(request)
     context['active_menu'] = 'profil'
     context['page_title'] = 'Profil & Pengaturan Organisasi'
     return render(request, 'admin/pages/profil.html', context)
 
+@admin_required
 def admin_users_view(request):
     context = get_admin_full_context(request)
     context['active_menu'] = 'multi-admin'
     context['page_title'] = 'Manajemen Akun Pengelola & Hak Akses'
     return render(request, 'admin/pages/multi_admin.html', context)
 
+@admin_required
 def admin_audit_log_view(request):
     context = get_admin_full_context(request)
     context['active_menu'] = 'audit-log'
@@ -832,6 +865,7 @@ def admin_audit_log_view(request):
 # ─────────────────────────────────────────────────────────────
 
 # --- KAS ---
+@admin_required
 def admin_tambah_transaksi(request):
     if request.method == 'POST':
         jenis = request.POST.get('jenis', 'MASUK')
@@ -863,6 +897,7 @@ def admin_tambah_transaksi(request):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
+@admin_required
 def admin_hapus_transaksi(request, pk):
     if request.method not in ('POST', 'DELETE', 'GET'):
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
@@ -874,6 +909,7 @@ def admin_hapus_transaksi(request, pk):
 
 
 # --- DATA MAHASISWA & ALUMNI ---
+@admin_required
 def admin_tambah_anggota(request):
     if request.method == 'POST':
         nama = request.POST.get('nama', '').strip()
@@ -910,6 +946,7 @@ def admin_tambah_anggota(request):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
+@admin_required
 def admin_hapus_anggota(request, pk):
     if request.method not in ('POST', 'DELETE', 'GET'):
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
@@ -920,6 +957,7 @@ def admin_hapus_anggota(request, pk):
     return JsonResponse({'status': 'success', 'message': 'Data mahasiswa berhasil dihapus.'})
 
 
+@admin_required
 def admin_edit_anggota(request, pk):
     anggota = get_object_or_404(Anggota, pk=pk)
     if request.method == 'GET':
@@ -969,6 +1007,7 @@ def admin_edit_anggota(request, pk):
 
 
 # --- STRUKTUR KEPENGURUSAN ---
+@admin_required
 def admin_tambah_struktur(request):
     if request.method == 'POST':
         nama = request.POST.get('nama', '').strip()
@@ -1007,6 +1046,7 @@ def admin_tambah_struktur(request):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
+@admin_required
 def admin_edit_struktur(request, pk):
     st = get_object_or_404(PengurusStruktur, pk=pk)
     if request.method == 'GET':
@@ -1055,6 +1095,7 @@ def admin_edit_struktur(request, pk):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
+@admin_required
 def admin_hapus_struktur(request, pk):
     if request.method not in ('POST', 'DELETE', 'GET'):
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
@@ -1066,6 +1107,7 @@ def admin_hapus_struktur(request, pk):
 
 
 # --- DIVISI STRUKTUR ---
+@admin_required
 def admin_list_divisi_struktur(request):
     divisi = DivisiStruktur.objects.all().order_by('urutan', 'nama')
     data = [{
@@ -1079,6 +1121,7 @@ def admin_list_divisi_struktur(request):
     return JsonResponse({'status': 'success', 'data': data})
 
 
+@admin_required
 def admin_tambah_divisi_struktur(request):
     if request.method == 'POST':
         kode = request.POST.get('kode', '').strip()
@@ -1105,6 +1148,7 @@ def admin_tambah_divisi_struktur(request):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
+@admin_required
 def admin_edit_divisi_struktur(request, pk):
     div = get_object_or_404(DivisiStruktur, pk=pk)
     if request.method == 'GET':
@@ -1155,6 +1199,7 @@ def admin_edit_divisi_struktur(request, pk):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
+@admin_required
 def admin_hapus_divisi_struktur(request, pk):
     if request.method not in ('POST', 'DELETE', 'GET'):
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
@@ -1166,6 +1211,7 @@ def admin_hapus_divisi_struktur(request, pk):
 
 
 # --- ARSIP PERIODE KEPENGURUSAN ---
+@admin_required
 def admin_tambah_arsip(request):
     if request.method == 'POST':
         tahun_periode = request.POST.get('tahun_periode', '').strip()
@@ -1212,6 +1258,7 @@ def admin_tambah_arsip(request):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
+@admin_required
 def admin_edit_arsip(request, pk):
     arsip = get_object_or_404(ArsipPeriode, pk=pk)
     if request.method == 'GET':
@@ -1279,6 +1326,7 @@ def admin_edit_arsip(request, pk):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
+@admin_required
 def admin_hapus_arsip(request, pk):
     if request.method not in ('POST', 'DELETE', 'GET'):
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
@@ -1290,6 +1338,7 @@ def admin_hapus_arsip(request, pk):
 
 
 # --- FORM BUILDER & GOOGLE FORM EDITABLE QUESTIONS ---
+@admin_required
 def admin_get_form_detail(request, pk):
     form_obj = get_object_or_404(FormulirOnline, pk=pk)
     analytics = form_obj.get_analytics()
@@ -1328,6 +1377,7 @@ def admin_get_form_detail(request, pk):
     })
 
 
+@admin_required
 def admin_tambah_formulir(request):
     if request.method == 'POST':
         judul = request.POST.get('judul', '').strip()
@@ -1372,6 +1422,7 @@ def admin_tambah_formulir(request):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
+@admin_required
 def admin_edit_formulir(request, pk):
     form_obj = get_object_or_404(FormulirOnline, pk=pk)
     if request.method == 'POST':
@@ -1410,6 +1461,7 @@ def admin_edit_formulir(request, pk):
     return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
 
 
+@admin_required
 def admin_toggle_formulir(request, pk):
     form_obj = get_object_or_404(FormulirOnline, pk=pk)
     form_obj.is_active = not form_obj.is_active
@@ -1420,6 +1472,7 @@ def admin_toggle_formulir(request, pk):
     return JsonResponse({'status': 'success', 'is_active': form_obj.is_active, 'message': f'Status formulir berhasil diubah menjadi {status_str}.'})
 
 
+@admin_required
 def admin_hapus_formulir(request, pk):
     if request.method not in ('POST', 'DELETE', 'GET'):
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
@@ -1431,6 +1484,7 @@ def admin_hapus_formulir(request, pk):
 
 
 # --- KATEGORI FORMULIR (GFORM) ---
+@admin_required
 def admin_list_kategori_form(request):
     kategori = KategoriFormulir.objects.all().order_by('urutan', 'nama')
     data = [{
@@ -1443,6 +1497,7 @@ def admin_list_kategori_form(request):
     return JsonResponse({'status': 'success', 'data': data})
 
 
+@admin_required
 def admin_tambah_kategori_form(request):
     if request.method == 'POST':
         nama = request.POST.get('nama', '').strip()
@@ -1466,6 +1521,7 @@ def admin_tambah_kategori_form(request):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
+@admin_required
 def admin_edit_kategori_form(request, pk):
     kat = get_object_or_404(KategoriFormulir, pk=pk)
     if request.method == 'GET':
@@ -1507,6 +1563,7 @@ def admin_edit_kategori_form(request, pk):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
+@admin_required
 def admin_hapus_kategori_form(request, pk):
     if request.method not in ('POST', 'DELETE', 'GET'):
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
@@ -1518,6 +1575,7 @@ def admin_hapus_kategori_form(request, pk):
 
 
 # --- ASPIRASI MAHASISWA & EDITABLE QUESTIONS ---
+@admin_required
 def admin_get_aspirasi_config(request):
     config = AspirasiFormConfig.get_solo()
     return JsonResponse({
@@ -1532,6 +1590,7 @@ def admin_get_aspirasi_config(request):
     })
 
 
+@admin_required
 def admin_simpan_aspirasi_config(request):
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
@@ -1561,6 +1620,7 @@ def admin_simpan_aspirasi_config(request):
     })
 
 
+@admin_required
 def admin_get_aspirasi_analytics(request):
     total_aspirasi = AspirasiMahasiswa.objects.count()
     config = AspirasiFormConfig.get_solo()
@@ -1655,6 +1715,7 @@ def admin_get_aspirasi_analytics(request):
     })
 
 
+@admin_required
 def admin_update_aspirasi(request, pk):
     asp = get_object_or_404(AspirasiMahasiswa, pk=pk)
     if request.method == 'POST':
@@ -1673,6 +1734,7 @@ def admin_update_aspirasi(request, pk):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
+@admin_required
 def admin_hapus_aspirasi(request, pk):
     if request.method not in ('POST', 'DELETE', 'GET'):
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
@@ -1684,6 +1746,7 @@ def admin_hapus_aspirasi(request, pk):
 
 
 # --- PROGRAM KERJA ---
+@admin_required
 def admin_tambah_proker(request):
     if request.method == 'POST':
         nama = request.POST.get('nama', '').strip()
@@ -1723,6 +1786,7 @@ def admin_tambah_proker(request):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
+@admin_required
 def admin_hapus_proker(request, pk):
     if request.method not in ('POST', 'DELETE', 'GET'):
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
@@ -1733,6 +1797,7 @@ def admin_hapus_proker(request, pk):
     return JsonResponse({'status': 'success', 'message': 'Program kerja berhasil dihapus.'})
 
 
+@admin_required
 def admin_edit_proker(request, pk):
     proker = get_object_or_404(ProgramKerja, pk=pk)
     if request.method == 'GET':
@@ -1794,7 +1859,101 @@ def admin_edit_proker(request, pk):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
+# ==================== KATEGORI BERITA CRUD ====================
+@admin_required
+def admin_list_kategori_berita(request):
+    kategori = KategoriBerita.objects.all().order_by('urutan', 'nama')
+    data = [{
+        'id': k.id,
+        'nama': k.nama,
+        'deskripsi': k.deskripsi,
+        'urutan': k.urutan,
+        'total_berita': Berita.objects.filter(kategori=k.nama).count()
+    } for k in kategori]
+    return JsonResponse({'status': 'success', 'data': data})
+
+
+@admin_required
+def admin_tambah_kategori_berita(request):
+    if request.method == 'POST':
+        nama = request.POST.get('nama', '').strip()
+        deskripsi = request.POST.get('deskripsi', '').strip()
+        try:
+            urutan = int(request.POST.get('urutan', '0') or '0')
+        except ValueError:
+            urutan = 0
+        if not nama:
+            return JsonResponse({'status': 'error', 'message': 'Nama kategori berita wajib diisi!'}, status=400)
+        if KategoriBerita.objects.filter(nama__iexact=nama).exists():
+            return JsonResponse({'status': 'error', 'message': f'Kategori berita "{nama}" sudah ada!'}, status=400)
+        kat = KategoriBerita.objects.create(nama=nama, deskripsi=deskripsi, urutan=urutan)
+        user_name = request.user.get_full_name() or request.user.username or 'Admin'
+        log_audit(user_name, 'Tambah Kategori Berita', kat.nama, request)
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Kategori berita "{kat.nama}" berhasil ditambahkan!',
+            'data': {'id': kat.id, 'nama': kat.nama, 'deskripsi': kat.deskripsi, 'urutan': kat.urutan}
+        })
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
+
+@admin_required
+def admin_edit_kategori_berita(request, pk):
+    kat = get_object_or_404(KategoriBerita, pk=pk)
+    if request.method == 'GET':
+        return JsonResponse({
+            'status': 'success',
+            'data': {'id': kat.id, 'nama': kat.nama, 'deskripsi': kat.deskripsi, 'urutan': kat.urutan}
+        })
+    elif request.method == 'POST':
+        old_nama = kat.nama
+        nama = request.POST.get('nama', '').strip()
+        deskripsi = request.POST.get('deskripsi', '').strip()
+        try:
+            urutan = int(request.POST.get('urutan', str(kat.urutan)) or '0')
+        except ValueError:
+            urutan = kat.urutan
+        if not nama:
+            return JsonResponse({'status': 'error', 'message': 'Nama kategori berita wajib diisi!'}, status=400)
+        if KategoriBerita.objects.filter(nama__iexact=nama).exclude(pk=pk).exists():
+            return JsonResponse({'status': 'error', 'message': f'Kategori berita "{nama}" sudah ada!'}, status=400)
+        
+        kat.nama = nama
+        kat.deskripsi = deskripsi
+        kat.urutan = urutan
+        kat.save()
+
+        # Update matching berita
+        if old_nama != nama:
+            Berita.objects.filter(kategori=old_nama).update(kategori=nama)
+
+        user_name = request.user.get_full_name() or request.user.username or 'Admin'
+        log_audit(user_name, 'Edit Kategori Berita', f'{old_nama} -> {kat.nama}', request)
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Kategori berita "{kat.nama}" berhasil diperbarui!',
+            'data': {'id': kat.id, 'nama': kat.nama, 'deskripsi': kat.deskripsi, 'urutan': kat.urutan}
+        })
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
+
+@admin_required
+def admin_hapus_kategori_berita(request, pk):
+    if request.method == 'POST':
+        kat = get_object_or_404(KategoriBerita, pk=pk)
+        nama = kat.nama
+        kat.delete()
+        user_name = request.user.get_full_name() or request.user.username or 'Admin'
+        log_audit(user_name, 'Hapus Kategori Berita', nama, request)
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Kategori berita "{nama}" berhasil dihapus!'
+        })
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
+
 # --- BERITA ---
+@admin_required
 def admin_tambah_berita(request):
     if request.method == 'POST':
         judul = request.POST.get('judul', '').strip()
@@ -1832,6 +1991,7 @@ def admin_tambah_berita(request):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
+@admin_required
 def admin_hapus_berita(request, pk):
     if request.method not in ('POST', 'DELETE', 'GET'):
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
@@ -1842,6 +2002,7 @@ def admin_hapus_berita(request, pk):
     return JsonResponse({'status': 'success', 'message': 'Berita berhasil dihapus.'})
 
 
+@admin_required
 def admin_edit_berita(request, pk):
     berita = get_object_or_404(Berita, pk=pk)
     if request.method == 'GET':
@@ -1892,7 +2053,101 @@ def admin_edit_berita(request, pk):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
+# ==================== KATEGORI GALERI CRUD ====================
+@admin_required
+def admin_list_kategori_galeri(request):
+    kategori = KategoriGaleri.objects.all().order_by('urutan', 'nama')
+    data = [{
+        'id': k.id,
+        'nama': k.nama,
+        'deskripsi': k.deskripsi,
+        'urutan': k.urutan,
+        'total_galeri': GaleriKegiatan.objects.filter(kategori=k.nama).count()
+    } for k in kategori]
+    return JsonResponse({'status': 'success', 'data': data})
+
+
+@admin_required
+def admin_tambah_kategori_galeri(request):
+    if request.method == 'POST':
+        nama = request.POST.get('nama', '').strip()
+        deskripsi = request.POST.get('deskripsi', '').strip()
+        try:
+            urutan = int(request.POST.get('urutan', '0') or '0')
+        except ValueError:
+            urutan = 0
+        if not nama:
+            return JsonResponse({'status': 'error', 'message': 'Nama kategori galeri wajib diisi!'}, status=400)
+        if KategoriGaleri.objects.filter(nama__iexact=nama).exists():
+            return JsonResponse({'status': 'error', 'message': f'Kategori galeri "{nama}" sudah ada!'}, status=400)
+        kat = KategoriGaleri.objects.create(nama=nama, deskripsi=deskripsi, urutan=urutan)
+        user_name = request.user.get_full_name() or request.user.username or 'Admin'
+        log_audit(user_name, 'Tambah Kategori Galeri', kat.nama, request)
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Kategori galeri "{kat.nama}" berhasil ditambahkan!',
+            'data': {'id': kat.id, 'nama': kat.nama, 'deskripsi': kat.deskripsi, 'urutan': kat.urutan}
+        })
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
+
+@admin_required
+def admin_edit_kategori_galeri(request, pk):
+    kat = get_object_or_404(KategoriGaleri, pk=pk)
+    if request.method == 'GET':
+        return JsonResponse({
+            'status': 'success',
+            'data': {'id': kat.id, 'nama': kat.nama, 'deskripsi': kat.deskripsi, 'urutan': kat.urutan}
+        })
+    elif request.method == 'POST':
+        old_nama = kat.nama
+        nama = request.POST.get('nama', '').strip()
+        deskripsi = request.POST.get('deskripsi', '').strip()
+        try:
+            urutan = int(request.POST.get('urutan', str(kat.urutan)) or '0')
+        except ValueError:
+            urutan = kat.urutan
+        if not nama:
+            return JsonResponse({'status': 'error', 'message': 'Nama kategori galeri wajib diisi!'}, status=400)
+        if KategoriGaleri.objects.filter(nama__iexact=nama).exclude(pk=pk).exists():
+            return JsonResponse({'status': 'error', 'message': f'Kategori galeri "{nama}" sudah ada!'}, status=400)
+        
+        kat.nama = nama
+        kat.deskripsi = deskripsi
+        kat.urutan = urutan
+        kat.save()
+
+        # Update matching galeri photos
+        if old_nama != nama:
+            GaleriKegiatan.objects.filter(kategori=old_nama).update(kategori=nama)
+
+        user_name = request.user.get_full_name() or request.user.username or 'Admin'
+        log_audit(user_name, 'Edit Kategori Galeri', f'{old_nama} -> {kat.nama}', request)
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Kategori galeri "{kat.nama}" berhasil diperbarui!',
+            'data': {'id': kat.id, 'nama': kat.nama, 'deskripsi': kat.deskripsi, 'urutan': kat.urutan}
+        })
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
+
+@admin_required
+def admin_hapus_kategori_galeri(request, pk):
+    if request.method == 'POST':
+        kat = get_object_or_404(KategoriGaleri, pk=pk)
+        nama = kat.nama
+        kat.delete()
+        user_name = request.user.get_full_name() or request.user.username or 'Admin'
+        log_audit(user_name, 'Hapus Kategori Galeri', nama, request)
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Kategori galeri "{nama}" berhasil dihapus!'
+        })
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
+
 # --- GALERI ---
+@admin_required
 def admin_tambah_galeri(request):
     if request.method == 'POST':
         judul = request.POST.get('judul', '').strip()
@@ -1921,6 +2176,7 @@ def admin_tambah_galeri(request):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
+@admin_required
 def admin_hapus_galeri(request, pk):
     if request.method not in ('POST', 'DELETE', 'GET'):
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
@@ -1931,6 +2187,7 @@ def admin_hapus_galeri(request, pk):
     return JsonResponse({'status': 'success', 'message': 'Foto galeri berhasil dihapus.'})
 
 
+@admin_required
 def admin_edit_galeri(request, pk):
     galeri = get_object_or_404(GaleriKegiatan, pk=pk)
     if request.method == 'GET':
@@ -1974,6 +2231,7 @@ def admin_edit_galeri(request, pk):
 
 
 # --- PROFIL ORGANISASI ---
+@admin_required
 def admin_update_profil(request):
     if request.method == 'POST':
         profile = OrganizationProfile.objects.first()
@@ -2009,6 +2267,7 @@ def admin_update_profil(request):
 
 
 # --- MULTI ADMIN ---
+@admin_required
 def admin_tambah_user(request):
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
@@ -2037,6 +2296,7 @@ def admin_tambah_user(request):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
+@admin_required
 def admin_hapus_user(request, pk):
     if request.method not in ('POST', 'DELETE', 'GET'):
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
@@ -2050,6 +2310,7 @@ def admin_hapus_user(request, pk):
 
 
 # --- SERTIFIKAT & PRESENSI ---
+@admin_required
 def admin_tambah_sertifikat(request):
     if request.method == 'POST':
         nomor = request.POST.get('nomor_sertifikat', '').strip()
@@ -2084,6 +2345,7 @@ def admin_tambah_sertifikat(request):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
+@admin_required
 def admin_hapus_sertifikat(request, pk):
     if request.method not in ('POST', 'DELETE', 'GET'):
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
@@ -2094,6 +2356,7 @@ def admin_hapus_sertifikat(request, pk):
     return JsonResponse({'status': 'success', 'message': 'Sertifikat berhasil dihapus.'})
 
 
+@admin_required
 def admin_hapus_presensi(request, pk):
     if request.method not in ('POST', 'DELETE', 'GET'):
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)

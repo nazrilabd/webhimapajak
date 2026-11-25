@@ -2054,3 +2054,291 @@
         console.warn('Aspirasi chart data error:', e);
       }
     });
+
+    // ==================== KATEGORI BERITA CRUD ====================
+    function openManageKategoriBeritaModal() {
+      const modal = document.getElementById('modal-manage-kategori-berita');
+      if (modal) modal.classList.remove('hidden');
+      refreshKategoriBeritaList();
+    }
+    function closeManageKategoriBeritaModal() {
+      const modal = document.getElementById('modal-manage-kategori-berita');
+      if (modal) modal.classList.add('hidden');
+      resetKategoriBeritaForm();
+    }
+    function resetKategoriBeritaForm() {
+      const idEl = document.getElementById('kat-berita-id');
+      if (idEl) idEl.value = '';
+      const namaEl = document.getElementById('kat-berita-nama');
+      if (namaEl) namaEl.value = '';
+      const descEl = document.getElementById('kat-berita-deskripsi');
+      if (descEl) descEl.value = '';
+      const urutanEl = document.getElementById('kat-berita-urutan');
+      if (urutanEl) urutanEl.value = '0';
+      const titleEl = document.getElementById('kat-berita-mode-title');
+      if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-plus-circle text-purple-600"></i> Tambah Kategori Berita';
+      const btnSave = document.getElementById('btn-save-kat-berita');
+      if (btnSave) btnSave.innerHTML = '<i class="fa-solid fa-plus"></i> Tambah Kategori';
+      const btnCancel = document.getElementById('btn-cancel-edit-kat-berita');
+      if (btnCancel) btnCancel.classList.add('hidden');
+    }
+    async function refreshKategoriBeritaList() {
+      try {
+        const res = await fetch('/admin-api/kategori-berita/list/');
+        const json = await res.json();
+        if (json.status === 'success') {
+          const tbody = document.getElementById('kategori-berita-table-body');
+          const selectAdd = document.getElementById('brt-kategori');
+          const selectEdit = document.getElementById('edit-brt-kategori');
+          const currentAdd = selectAdd ? selectAdd.value : '';
+          const currentEdit = selectEdit ? selectEdit.value : '';
+
+          if (tbody) {
+            if (!json.data || json.data.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="5" class="py-4 text-center text-slate-400">Belum ada kategori berita.</td></tr>';
+            } else {
+              tbody.innerHTML = json.data.map(k => `
+                <tr id="kat-berita-row-${k.id}" class="hover:bg-slate-50 border-b border-slate-100">
+                  <td class="py-2.5 px-3 font-bold text-brand-navy">${escapeHtml(k.nama)}</td>
+                  <td class="py-2.5 px-3 text-slate-500 max-w-xs truncate">${escapeHtml(k.deskripsi || '-')}</td>
+                  <td class="py-2.5 px-3 text-center font-mono text-slate-400">${k.urutan}</td>
+                  <td class="py-2.5 px-3 text-center font-mono font-bold text-purple-700">${k.total_berita || 0}</td>
+                  <td class="py-2.5 px-3 text-center">
+                    <div class="flex items-center justify-center gap-1.5">
+                      <button type="button" onclick="editKategoriBerita(${k.id})" class="p-1 text-blue-600 hover:bg-blue-50 rounded" title="Edit">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                      </button>
+                      <button type="button" onclick="deleteKategoriBerita(${k.id})" class="p-1 text-rose-600 hover:bg-rose-50 rounded" title="Hapus">
+                        <i class="fa-solid fa-trash-can"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('');
+            }
+          }
+
+          if (json.data && json.data.length > 0) {
+            const optionsHtml = json.data.map(k => `<option value="${escapeHtml(k.nama)}">${escapeHtml(k.nama)}</option>`).join('');
+            if (selectAdd) {
+              selectAdd.innerHTML = optionsHtml;
+              if (currentAdd) selectAdd.value = currentAdd;
+            }
+            if (selectEdit) {
+              selectEdit.innerHTML = optionsHtml;
+              if (currentEdit) selectEdit.value = currentEdit;
+            }
+          }
+        }
+      } catch(e) {
+        console.error('Error refreshing kategori berita list:', e);
+      }
+    }
+    async function handleSaveKategoriBerita(e) {
+      e.preventDefault();
+      const idEl = document.getElementById('kat-berita-id');
+      const id = idEl ? idEl.value : '';
+      const nama = (document.getElementById('kat-berita-nama').value || '').trim();
+      const deskripsi = (document.getElementById('kat-berita-deskripsi').value || '').trim();
+      const urutan = document.getElementById('kat-berita-urutan').value || 0;
+
+      const formData = new FormData();
+      formData.append('nama', nama);
+      formData.append('deskripsi', deskripsi);
+      formData.append('urutan', urutan);
+      addCsrfToFormData(formData);
+
+      const url = id ? `/admin-api/kategori-berita/edit/${id}/` : '/admin-api/kategori-berita/tambah/';
+      showToast('Menyimpan...', 'Menyimpan kategori berita...');
+      try {
+        const res = await fetch(url, { method: 'POST', body: formData, headers: { 'X-CSRFToken': getCsrfToken() } });
+        const json = await res.json();
+        if (json.status === 'success') {
+          showToast('Sukses', json.message);
+          resetKategoriBeritaForm();
+          refreshKategoriBeritaList();
+        } else {
+          showToast('Error', json.message || 'Gagal menyimpan kategori.');
+        }
+      } catch(err) {
+        showToast('Error', 'Gagal menghubungi server.');
+      }
+    }
+    async function editKategoriBerita(id) {
+      try {
+        const res = await fetch(`/admin-api/kategori-berita/edit/${id}/`);
+        const json = await res.json();
+        if (json.status === 'success' && json.data) {
+          const d = json.data;
+          document.getElementById('kat-berita-id').value = d.id;
+          document.getElementById('kat-berita-nama').value = d.nama || '';
+          document.getElementById('kat-berita-deskripsi').value = d.deskripsi || '';
+          document.getElementById('kat-berita-urutan').value = d.urutan || 0;
+          document.getElementById('kat-berita-mode-title').innerHTML = '<i class="fa-solid fa-pen-to-square text-purple-600"></i> Edit Kategori Berita';
+          document.getElementById('btn-save-kat-berita').innerHTML = '<i class="fa-solid fa-check"></i> Simpan Perubahan';
+          document.getElementById('btn-cancel-edit-kat-berita').classList.remove('hidden');
+          document.getElementById('kat-berita-nama').focus();
+        }
+      } catch(err) {
+        showToast('Error', 'Gagal memuat detail kategori.');
+      }
+    }
+    async function deleteKategoriBerita(id) {
+      if (!confirm('Hapus kategori berita ini?')) return;
+      try {
+        const res = await fetch(`/admin-api/kategori-berita/hapus/${id}/`, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() } });
+        const json = await res.json();
+        if (json.status === 'success') {
+          showToast('Sukses', json.message);
+          refreshKategoriBeritaList();
+        } else {
+          showToast('Error', json.message || 'Gagal menghapus kategori.');
+        }
+      } catch(err) {
+        showToast('Error', 'Gagal menghubungi server.');
+      }
+    }
+
+    // ==================== KATEGORI GALERI CRUD ====================
+    function openManageKategoriGaleriModal() {
+      const modal = document.getElementById('modal-manage-kategori-galeri');
+      if (modal) modal.classList.remove('hidden');
+      refreshKategoriGaleriList();
+    }
+    function closeManageKategoriGaleriModal() {
+      const modal = document.getElementById('modal-manage-kategori-galeri');
+      if (modal) modal.classList.add('hidden');
+      resetKategoriGaleriForm();
+    }
+    function resetKategoriGaleriForm() {
+      const idEl = document.getElementById('kat-galeri-id');
+      if (idEl) idEl.value = '';
+      const namaEl = document.getElementById('kat-galeri-nama');
+      if (namaEl) namaEl.value = '';
+      const descEl = document.getElementById('kat-galeri-deskripsi');
+      if (descEl) descEl.value = '';
+      const urutanEl = document.getElementById('kat-galeri-urutan');
+      if (urutanEl) urutanEl.value = '0';
+      const titleEl = document.getElementById('kat-galeri-mode-title');
+      if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-plus-circle text-amber-600"></i> Tambah Kategori Galeri';
+      const btnSave = document.getElementById('btn-save-kat-galeri');
+      if (btnSave) btnSave.innerHTML = '<i class="fa-solid fa-plus"></i> Tambah Kategori';
+      const btnCancel = document.getElementById('btn-cancel-edit-kat-galeri');
+      if (btnCancel) btnCancel.classList.add('hidden');
+    }
+    async function refreshKategoriGaleriList() {
+      try {
+        const res = await fetch('/admin-api/kategori-galeri/list/');
+        const json = await res.json();
+        if (json.status === 'success') {
+          const tbody = document.getElementById('kategori-galeri-table-body');
+          const selectAdd = document.getElementById('glr-kategori');
+          const selectEdit = document.getElementById('edit-glr-kategori');
+          const currentAdd = selectAdd ? selectAdd.value : '';
+          const currentEdit = selectEdit ? selectEdit.value : '';
+
+          if (tbody) {
+            if (!json.data || json.data.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="5" class="py-4 text-center text-slate-400">Belum ada kategori galeri.</td></tr>';
+            } else {
+              tbody.innerHTML = json.data.map(k => `
+                <tr id="kat-galeri-row-${k.id}" class="hover:bg-slate-50 border-b border-slate-100">
+                  <td class="py-2.5 px-3 font-bold text-brand-navy">${escapeHtml(k.nama)}</td>
+                  <td class="py-2.5 px-3 text-slate-500 max-w-xs truncate">${escapeHtml(k.deskripsi || '-')}</td>
+                  <td class="py-2.5 px-3 text-center font-mono text-slate-400">${k.urutan}</td>
+                  <td class="py-2.5 px-3 text-center font-mono font-bold text-amber-600">${k.total_galeri || 0}</td>
+                  <td class="py-2.5 px-3 text-center">
+                    <div class="flex items-center justify-center gap-1.5">
+                      <button type="button" onclick="editKategoriGaleri(${k.id})" class="p-1 text-blue-600 hover:bg-blue-50 rounded" title="Edit">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                      </button>
+                      <button type="button" onclick="deleteKategoriGaleri(${k.id})" class="p-1 text-rose-600 hover:bg-rose-50 rounded" title="Hapus">
+                        <i class="fa-solid fa-trash-can"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('');
+            }
+          }
+
+          if (json.data && json.data.length > 0) {
+            const optionsHtml = json.data.map(k => `<option value="${escapeHtml(k.nama)}">${escapeHtml(k.nama)}</option>`).join('');
+            if (selectAdd) {
+              selectAdd.innerHTML = optionsHtml;
+              if (currentAdd) selectAdd.value = currentAdd;
+            }
+            if (selectEdit) {
+              selectEdit.innerHTML = optionsHtml;
+              if (currentEdit) selectEdit.value = currentEdit;
+            }
+          }
+        }
+      } catch(e) {
+        console.error('Error refreshing kategori galeri list:', e);
+      }
+    }
+    async function handleSaveKategoriGaleri(e) {
+      e.preventDefault();
+      const idEl = document.getElementById('kat-galeri-id');
+      const id = idEl ? idEl.value : '';
+      const nama = (document.getElementById('kat-galeri-nama').value || '').trim();
+      const deskripsi = (document.getElementById('kat-galeri-deskripsi').value || '').trim();
+      const urutan = document.getElementById('kat-galeri-urutan').value || 0;
+
+      const formData = new FormData();
+      formData.append('nama', nama);
+      formData.append('deskripsi', deskripsi);
+      formData.append('urutan', urutan);
+      addCsrfToFormData(formData);
+
+      const url = id ? `/admin-api/kategori-galeri/edit/${id}/` : '/admin-api/kategori-galeri/tambah/';
+      showToast('Menyimpan...', 'Menyimpan kategori galeri...');
+      try {
+        const res = await fetch(url, { method: 'POST', body: formData, headers: { 'X-CSRFToken': getCsrfToken() } });
+        const json = await res.json();
+        if (json.status === 'success') {
+          showToast('Sukses', json.message);
+          resetKategoriGaleriForm();
+          refreshKategoriGaleriList();
+        } else {
+          showToast('Error', json.message || 'Gagal menyimpan kategori.');
+        }
+      } catch(err) {
+        showToast('Error', 'Gagal menghubungi server.');
+      }
+    }
+    async function editKategoriGaleri(id) {
+      try {
+        const res = await fetch(`/admin-api/kategori-galeri/edit/${id}/`);
+        const json = await res.json();
+        if (json.status === 'success' && json.data) {
+          const d = json.data;
+          document.getElementById('kat-galeri-id').value = d.id;
+          document.getElementById('kat-galeri-nama').value = d.nama || '';
+          document.getElementById('kat-galeri-deskripsi').value = d.deskripsi || '';
+          document.getElementById('kat-galeri-urutan').value = d.urutan || 0;
+          document.getElementById('kat-galeri-mode-title').innerHTML = '<i class="fa-solid fa-pen-to-square text-amber-600"></i> Edit Kategori Galeri';
+          document.getElementById('btn-save-kat-galeri').innerHTML = '<i class="fa-solid fa-check"></i> Simpan Perubahan';
+          document.getElementById('btn-cancel-edit-kat-galeri').classList.remove('hidden');
+          document.getElementById('kat-galeri-nama').focus();
+        }
+      } catch(err) {
+        showToast('Error', 'Gagal memuat detail kategori.');
+      }
+    }
+    async function deleteKategoriGaleri(id) {
+      if (!confirm('Hapus kategori galeri ini?')) return;
+      try {
+        const res = await fetch(`/admin-api/kategori-galeri/hapus/${id}/`, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() } });
+        const json = await res.json();
+        if (json.status === 'success') {
+          showToast('Sukses', json.message);
+          refreshKategoriGaleriList();
+        } else {
+          showToast('Error', json.message || 'Gagal menghapus kategori.');
+        }
+      } catch(err) {
+        showToast('Error', 'Gagal menghubungi server.');
+      }
+    }
