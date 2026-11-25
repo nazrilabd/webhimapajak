@@ -26,10 +26,10 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-fallback-key-ganti-di
 
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
-
-# Vercel domain support
-ALLOWED_HOSTS += ['.vercel.app']
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()]
+ALLOWED_HOSTS += ['.vercel.app', 'testserver', 'localhost', '127.0.0.1']
+if DEBUG:
+    ALLOWED_HOSTS.append('*')
 
 # CSRF trusted origins (wajib untuk Vercel HTTPS)
 CSRF_TRUSTED_ORIGINS = [
@@ -55,6 +55,9 @@ INSTALLED_APPS = [
     # Third-party
     'cloudinary',
     'cloudinary_storage',
+
+    # Local apps
+    'core',
 ]
 
 
@@ -89,6 +92,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.context_processors.organization_context',
             ],
         },
     },
@@ -147,8 +151,18 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
-# WhiteNoise: kompres & cache static files
+# WhiteNoise & Cloudinary Storages (Django 4.2+ / 5.x)
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 
 # ─────────────────────────────────────────────

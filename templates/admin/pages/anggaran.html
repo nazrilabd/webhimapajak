@@ -1,0 +1,170 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Transparansi & Buku Kas Bendahara - HIMA PERPAJAKAN UIMANDIRI{% endblock %}
+
+{% block page_heading %}Transparansi & Buku Kas Bendahara{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <div>
+            <div class="inline-flex items-center gap-1.5 bg-amber-100 text-brand-navy text-[10px] font-black px-2.5 py-0.5 rounded uppercase">
+              <i class="fa-solid fa-file-invoice-dollar"></i> Modul Pengelolaan Keuangan Ormawa
+            </div>
+            <h2 class="text-xl font-black text-brand-navy mt-1">Transparansi & Buku Kas Bendahara</h2>
+            <p class="text-xs text-slate-400">Catat transaksi, unggah kuitansi ke Cloudinary, dan unduh LPJ resmi.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="openAddTransactionModal()" class="bg-brand-yellow hover:bg-brand-yellowHover text-brand-navy font-black text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+              <i class="fa-solid fa-plus"></i> Catat Transaksi Baru
+            </button>
+            <a href="/laporan/lpj-keuangan/" target="_blank" class="bg-brand-navy hover:bg-brand-navyLight text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+              <i class="fa-solid fa-file-pdf"></i> Unduh LPJ PDF
+            </a>
+          </div>
+        </div>
+
+        <!-- 4 KPI Cards Anggaran -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white p-4 rounded-xl border border-slate-200">
+            <div class="text-[11px] font-bold text-slate-400 uppercase">Total Pemasukan</div>
+            <div class="text-2xl font-black text-emerald-600 mt-1">Rp {{ kpi.total_masuk|floatformat:0 }}</div>
+            <div class="text-[10px] text-slate-500 mt-1">Tersimpan di Neon PostgreSQL</div>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200">
+            <div class="text-[11px] font-bold text-slate-400 uppercase">Total Pengeluaran</div>
+            <div class="text-2xl font-black text-rose-600 mt-1">Rp {{ kpi.total_keluar|floatformat:0 }}</div>
+            <div class="text-[10px] text-slate-500 mt-1">Realisasi operasional & proker</div>
+          </div>
+          <div class="bg-white p-4 rounded-xl border-2 border-brand-yellow bg-amber-50/20">
+            <div class="text-[11px] font-bold text-amber-900 uppercase">Sisa Kas Tersedia</div>
+            <div class="text-2xl font-black text-brand-navy mt-1">Rp {{ kpi.saldo_kas|floatformat:0 }}</div>
+            <div class="text-[10px] text-emerald-700 font-bold mt-1">Saldo Kas Nyata</div>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-200">
+            <div class="text-[11px] font-bold text-slate-400 uppercase">Status Publikasi Publik</div>
+            <div class="text-lg font-black text-emerald-600 mt-1 flex items-center gap-1.5">
+              <i class="fa-solid fa-globe"></i> Publik Aktif
+            </div>
+            <div class="text-[10px] text-slate-400 mt-1">Terhubung ke Halaman Web</div>
+          </div>
+        </div>
+
+        <!-- Tabel Transaksi Kas Lengkap -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-3 justify-between items-center">
+            <div class="font-bold text-sm text-brand-navy">Daftar Transaksi Kas Ormawa (Total: {{ transaksi_list.count }} Transaksi)</div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-50 font-bold uppercase text-slate-400 border-b border-slate-200">
+                <tr>
+                  <th class="py-3 px-4">Tanggal</th>
+                  <th class="py-3 px-4">Kategori & Keterangan</th>
+                  <th class="py-3 px-4">PJ Transaksi</th>
+                  <th class="py-3 px-4">Jenis</th>
+                  <th class="py-3 px-4">Nominal (Rp)</th>
+                  <th class="py-3 px-4">Bukti Kuitansi (Cloudinary)</th>
+                  <th class="py-3 px-4 text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100" id="admin-kas-tbody">
+                {% for t in transaksi_list %}
+                <tr class="hover:bg-slate-50 transition" id="kas-row-{{ t.id }}">
+                  <td class="py-3 px-4 text-slate-400 whitespace-nowrap">{{ t.tanggal|date:"d M Y" }}</td>
+                  <td class="py-3 px-4 font-bold text-brand-navy">
+                    {{ t.kategori }}
+                    <div class="text-[10px] font-normal text-slate-500">{{ t.keterangan }}</div>
+                  </td>
+                  <td class="py-3 px-4">{{ t.pj_transaksi }}</td>
+                  <td class="py-3 px-4">
+                    {% if t.jenis == 'MASUK' %}
+                    <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">Pemasukan</span>
+                    {% else %}
+                    <span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded font-bold">Pengeluaran</span>
+                    {% endif %}
+                  </td>
+                  <td class="py-3 px-4 font-mono font-bold {% if t.jenis == 'MASUK' %}text-emerald-700{% else %}text-rose-600{% endif %}">
+                    {% if t.jenis == 'MASUK' %}+{% else %}-{% endif %} Rp {{ t.nominal|floatformat:0 }}
+                  </td>
+                  <td class="py-3 px-4">
+                    {% if t.bukti_transaksi or t.bukti_transaksi_url %}
+                    <a href="{{ t.get_bukti }}" target="_blank" class="text-brand-navy font-bold hover:underline flex items-center gap-1">
+                      <i class="fa-solid fa-file-image text-emerald-600"></i> Lihat Bukti Kuitansi
+                    </a>
+                    {% else %}
+                    <span class="text-slate-400 text-[10px]">-</span>
+                    {% endif %}
+                  </td>
+                  <td class="py-3 px-4 text-center">
+                    <button onclick="deleteKas({{ t.id }})" class="text-rose-500 hover:text-rose-700 p-1"><i class="fa-solid fa-trash-can"></i></button>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center py-4 text-slate-400">Belum ada transaksi kas tercatat.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- MODAL: INPUT TRANSAKSI KAS -->
+  <div id="modal-add-transaction" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
+      <button onclick="closeAddTransactionModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div class="w-12 h-12 rounded-2xl bg-amber-50 text-brand-navy flex items-center justify-center text-xl font-bold mb-3 border border-brand-yellow/40">
+        <i class="fa-solid fa-coins text-brand-navy"></i>
+      </div>
+      <h3 class="text-base font-black text-brand-navy">Catat Transaksi Kas Bendahara</h3>
+      <p class="text-xs text-slate-400 mt-0.5">Bukti transaksi akan diunggah ke Cloudinary dan disimpan ke Neon DB.</p>
+
+      <form onsubmit="handleTransactionSubmit(event)" enctype="multipart/form-data" class="mt-4 space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Jenis Transaksi</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="trans_type" value="MASUK" checked>
+              <span class="font-bold text-emerald-700">Pemasukan (+)</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="trans_type" value="KELUAR">
+              <span class="font-bold text-rose-700">Pengeluaran (-)</span>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Uraian / Kategori Transaksi</label>
+          <input type="text" id="tr-desc" required placeholder="Contoh: Honor Pemateri Workshop Pajak" class="w-full px-3 py-2 border border-slate-200 rounded-lg">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Nominal (Rp)</label>
+            <input type="number" id="tr-amount" required placeholder="2500000" class="w-full px-3 py-2 border border-slate-200 rounded-lg font-mono">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Tanggal</label>
+            <input type="date" id="tr-date" required class="w-full px-3 py-2 border border-slate-200 rounded-lg">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Unggah Lampiran Kuitansi / Bukti (Cloudinary)</label>
+          <input type="file" id="tr-file" accept="image/*" class="w-full text-slate-500 text-[11px] file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-100 file:font-semibold">
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeAddTransactionModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-semibold">Batal</button>
+          <button type="submit" id="btn-save-kas" class="px-5 py-2 bg-brand-yellow hover:bg-brand-yellowHover text-brand-navy font-black rounded-xl">Simpan Transaksi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Program Kerja - {{ profile.nama_organisasi|default:"HIMA PERPAJAKAN UIMANDIRI" }}{% endblock %}
+
+{% block content %}
+      <div class="bg-brand-navy text-white py-14">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-xs text-brand-yellow uppercase tracking-widest font-bold">Rencana Kerja Tahunan</div>
+          <h1 class="text-3xl sm:text-4xl font-black mt-1">Program Kerja & Kegiatan</h1>
+          <p class="text-slate-300 text-sm mt-2 max-w-2xl">Daftar agenda kegiatan dan pelaksanaan program kerja HIMA Perpajakan.</p>
+        </div>
+      </div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {% for p in proker_list %}
+          <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+            <div>
+              {% if p.get_banner %}
+              <div class="mb-4 rounded-xl overflow-hidden h-40 border border-slate-100">
+                <img src="{{ p.get_banner }}" alt="{{ p.nama }}" class="w-full h-full object-cover">
+              </div>
+              {% endif %}
+              <div class="flex items-center justify-between mb-3">
+                <span class="bg-blue-50 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded">{{ p.divisi }}</span>
+                <span class="{% if p.status == 'Selesai' %}bg-emerald-100 text-emerald-800{% elif p.status == 'Berjalan' %}bg-amber-100 text-amber-800{% else %}bg-slate-100 text-slate-700{% endif %} text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                  {% if p.status == 'Selesai' %}<i class="fa-solid fa-circle-check"></i>{% elif p.status == 'Berjalan' %}<i class="fa-solid fa-spinner fa-spin"></i>{% else %}<i class="fa-regular fa-clock"></i>{% endif %} {{ p.status }}
+                </span>
+              </div>
+              <h3 class="font-bold text-brand-navy text-lg">{{ p.nama }}</h3>
+              <p class="text-slate-600 text-xs mt-2 leading-relaxed">
+                {{ p.deskripsi }}
+              </p>
+            </div>
+            <div class="mt-4 pt-4 border-t border-slate-100 text-xs text-slate-500 space-y-1.5">
+              {% if p.waktu_info or p.lokasi %}
+              <div class="flex items-center gap-1.5">
+                <i class="fa-regular fa-calendar text-brand-navy w-4"></i>
+                <span>{{ p.waktu_info }}{% if p.waktu_info and p.lokasi %} &bull; {% endif %}{{ p.lokasi }}</span>
+              </div>
+              {% endif %}
+              {% if p.target_peserta %}
+              <div class="flex items-center gap-1.5">
+                <i class="fa-solid fa-users text-brand-navy w-4"></i>
+                <span>Target: {{ p.target_peserta }}</span>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% empty %}
+          <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition">
+            <div class="flex items-center justify-between mb-3">
+              <span class="bg-blue-50 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded">Divisi Diklat</span>
+              <span class="bg-emerald-100 text-emerald-800 text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                <i class="fa-solid fa-circle-check"></i> Terlaksana
+              </span>
+            </div>
+            <h3 class="font-bold text-brand-navy text-lg">Pelatihan Brevet Pajak A/B Batch 13</h3>
+            <p class="text-slate-600 text-xs mt-2">
+              Pelatihan perpajakan komprehensif bersertifikasi resmi untuk 80 mahasiswa dengan materi SPT Masa & Badan.
+            </p>
+            <div class="mt-4 pt-4 border-t border-slate-100 text-xs text-slate-500 space-y-1">
+              <div><i class="fa-regular fa-calendar text-brand-navy mr-1"></i> Jadwal: November 2026 &bull; Lab Tax Center</div>
+              <div><i class="fa-solid fa-users text-brand-navy mr-1"></i> Target: Mahasiswa Perpajakan</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+      </div>
+{% endblock %}
+

@@ -1,0 +1,84 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Profil & Pengaturan Organisasi - HIMA PERPAJAKAN UIMANDIRI{% endblock %}
+
+{% block page_heading %}Profil & Pengaturan Organisasi{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+<div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-black text-brand-navy">Profil & Pengaturan Organisasi</h2>
+            <p class="text-xs text-slate-400">Perbarui visi, misi, sejarah pendirian, sambutan ketua, foto ketua, dan kontak resmi.</p>
+          </div>
+        </div>
+
+        <form id="form-update-profil" onsubmit="handleUpdateProfilSubmit(event)" enctype="multipart/form-data" class="bg-white rounded-2xl border border-slate-200 p-6 space-y-4 shadow-sm">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Nama Organisasi</label>
+              <input type="text" name="nama_organisasi" value="{{ profile.nama_organisasi }}" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Tagline Slogan</label>
+              <input type="text" name="tagline" value="{{ profile.tagline }}" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Nama Ketua Umum</label>
+              <input type="text" name="nama_ketua" value="{{ profile.nama_ketua }}" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Periode Aktif</label>
+              <input type="text" name="periode_aktif" value="{{ profile.periode_aktif }}" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Sambutan Ketua Umum</label>
+            <textarea name="sambutan_ketua" rows="3" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg">{{ profile.sambutan_ketua }}</textarea>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Foto Ketua Umum (Upload ke Cloudinary)</label>
+            <input type="file" name="foto_ketua" accept="image/*" class="w-full text-slate-500 text-[11px] file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-100 file:font-semibold">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Visi Organisasi</label>
+            <textarea name="visi" rows="2" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg">{{ profile.visi }}</textarea>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Misi Organisasi</label>
+            <textarea name="misi" rows="3" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg">{{ profile.misi }}</textarea>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Email Sekretariat</label>
+              <input type="email" name="email" value="{{ profile.email }}" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">No WhatsApp</label>
+              <input type="text" name="no_whatsapp" value="{{ profile.no_whatsapp }}" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Alamat Sekretariat</label>
+            <input type="text" name="alamat" value="{{ profile.alamat }}" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg">
+          </div>
+
+          <button type="submit" class="bg-brand-yellow hover:bg-brand-yellowHover text-brand-navy font-black text-xs px-5 py-2.5 rounded-xl shadow transition">
+            <i class="fa-solid fa-check mr-1"></i> Simpan Data Organisasi ke Database
+          </button>
+        </form>
+
+      </div>
+
+      <!-- ==================== TAB 12: MULTI ADMIN & HAK AKSES ==================== -->
+</div>
+{% endblock %}

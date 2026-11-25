@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Galeri Dokumentasi Kegiatan - {{ profile.nama_organisasi|default:"HIMA PERPAJAKAN UIMANDIRI" }}{% endblock %}
+
+{% block content %}
+      <div class="bg-brand-navy text-white py-14">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-xs text-brand-yellow uppercase tracking-widest font-bold">Dokumentasi Visual</div>
+          <h1 class="text-3xl sm:text-4xl font-black mt-1">Galeri Kegiatan & Momen Ormawa</h1>
+          <p class="text-slate-300 text-sm mt-2 max-w-2xl">Dokumentasi pelatihan brevet, baksos relawan pajak, dan seminar nasional HIMA Perpajakan UIMANDIRI.</p>
+        </div>
+      </div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+        
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {% for g in galeri_list %}
+          <div class="group relative overflow-hidden rounded-2xl shadow-sm aspect-square bg-slate-800 cursor-pointer" onclick="openImageModal(this)">
+            <img src="{{ g.get_gambar }}" alt="{{ g.judul }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+            <div class="absolute inset-0 bg-brand-navy/70 opacity-0 group-hover:opacity-100 transition duration-300 flex flex-col justify-end p-4 text-white">
+              <p class="text-xs font-bold">{{ g.judul }}</p>
+              <p class="text-[10px] text-brand-yellow">{{ g.kategori }} &bull; {{ g.tanggal_kegiatan|date:"d M Y" }}</p>
+            </div>
+          </div>
+          {% empty %}
+          <div class="group relative overflow-hidden rounded-2xl shadow-sm aspect-square bg-slate-800 cursor-pointer" onclick="openImageModal(this)">
+            <img src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=600&q=80" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+            <div class="absolute inset-0 bg-brand-navy/70 opacity-0 group-hover:opacity-100 transition duration-300 flex flex-col justify-end p-4 text-white">
+              <p class="text-xs font-bold">Praktikum Brevet A/B</p>
+              <p class="text-[10px] text-brand-yellow">Lab Tax Center UIMANDIRI</p>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+      </div>
+{% endblock %}
+

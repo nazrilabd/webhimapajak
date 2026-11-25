@@ -1,0 +1,186 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Kelola Program Kerja & Kegiatan - HIMA PERPAJAKAN UIMANDIRI{% endblock %}
+
+{% block page_heading %}Kelola Program Kerja & Kegiatan{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+<div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-black text-brand-navy">Kelola Program Kerja & Kegiatan</h2>
+            <p class="text-xs text-slate-400">Kelola daftar kegiatan dan jadwal program kerja HIMA Perpajakan.</p>
+          </div>
+          <button onclick="openAddProkerModal()" class="bg-brand-yellow hover:bg-brand-yellowHover text-brand-navy font-black text-xs px-4 py-2.5 rounded-xl shadow transition">
+            + Tambah Proker Baru
+          </button>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <table class="w-full text-left text-xs text-slate-700">
+            <thead class="bg-slate-50 font-bold uppercase text-slate-400 border-b border-slate-200">
+              <tr>
+                <th class="py-3 px-4">Nama Program Kerja</th>
+                <th class="py-3 px-4">Divisi Pelaksana</th>
+                <th class="py-3 px-4">Waktu & Lokasi</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              {% for p in proker_list %}
+              <tr id="proker-row-{{ p.id }}" class="hover:bg-slate-50 transition">
+                <td class="py-3 px-4 font-bold text-brand-navy">
+                  {{ p.nama }}
+                  <div class="text-[10px] text-slate-400 font-normal">{{ p.target_peserta }}</div>
+                </td>
+                <td class="py-3 px-4">{{ p.divisi }}</td>
+                <td class="py-3 px-4">{{ p.waktu_info }}<br><span class="text-[10px] text-slate-400">{{ p.lokasi }}</span></td>
+                <td class="py-3 px-4">
+                  <span class="px-2 py-0.5 rounded font-bold text-[10px] {% if p.status == 'Selesai' %}bg-emerald-100 text-emerald-800{% elif p.status == 'Berjalan' %}bg-blue-100 text-blue-800{% else %}bg-amber-100 text-amber-800{% endif %}">
+                    {{ p.status }}
+                  </span>
+                </td>
+                <td class="py-3 px-4 text-center">
+                  <div class="flex items-center justify-center gap-2">
+                    <button onclick="openEditProkerModal({{ p.id }})" class="text-blue-500 hover:text-blue-700" title="Edit Program Kerja">
+                      <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button onclick="deleteProker({{ p.id }})" class="text-rose-500 hover:text-rose-700" title="Hapus Program Kerja">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-center py-4 text-slate-400">Belum ada program kerja tercatat.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <!-- ==================== TAB 9: BERITA & PENGUMUMAN ==================== -->
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- MODAL: ADD PROKER -->
+  <div id="modal-add-proker" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeAddProkerModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl"><i class="fa-solid fa-xmark"></i></button>
+      <h3 class="text-base font-black text-brand-navy">Tambah Program Kerja Baru</h3>
+      <form onsubmit="handleAddProkerSubmit(event)" enctype="multipart/form-data" class="mt-4 space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Nama Kegiatan Proker</label>
+          <input type="text" id="prk-nama" required class="w-full px-3 py-2 border rounded-lg">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Divisi Pelaksana</label>
+            <select id="prk-divisi" class="w-full px-3 py-2 border rounded-lg">
+              <option>Diklat & Brevet</option>
+              <option>Kajian & Riset</option>
+              <option>Humas & Tax Center</option>
+              <option>Media Kreatif</option>
+              <option>BPH</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Status Kegiatan</label>
+            <select id="prk-status" class="w-full px-3 py-2 border rounded-lg">
+              <option>Terjadwal</option>
+              <option>Berjalan</option>
+              <option>Selesai</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Waktu Pelaksanaan</label>
+            <input type="text" id="prk-waktu" placeholder="Desember 2026" class="w-full px-3 py-2 border rounded-lg">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Lokasi Kegiatan</label>
+            <input type="text" id="prk-lokasi" placeholder="Auditorium / Online" class="w-full px-3 py-2 border rounded-lg">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Target Peserta</label>
+          <input type="text" id="prk-target" placeholder="Mahasiswa Aktif Perpajakan" class="w-full px-3 py-2 border rounded-lg">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Deskripsi Kegiatan</label>
+          <textarea id="prk-deskripsi" rows="2" class="w-full px-3 py-2 border rounded-lg"></textarea>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Banner Gambar (Cloudinary)</label>
+          <input type="file" id="prk-banner" accept="image/*" class="w-full text-slate-500 text-[11px]">
+        </div>
+        <button type="submit" id="btn-save-proker" class="w-full py-2 bg-brand-yellow font-black text-brand-navy rounded-lg mt-2">Simpan Program Kerja</button>
+      </form>
+    </div>
+  </div>
+
+
+
+  <!-- MODAL: EDIT PROKER -->
+  <div id="modal-edit-proker" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeEditProkerModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl"><i class="fa-solid fa-xmark"></i></button>
+      <h3 class="text-base font-black text-brand-navy">Edit Program Kerja</h3>
+      <form onsubmit="handleEditProkerSubmit(event)" enctype="multipart/form-data" class="mt-4 space-y-3 text-xs">
+        <input type="hidden" id="edit-prk-id">
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Nama Kegiatan Proker</label>
+          <input type="text" id="edit-prk-nama" required class="w-full px-3 py-2 border rounded-lg">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Divisi Pelaksana</label>
+            <select id="edit-prk-divisi" class="w-full px-3 py-2 border rounded-lg">
+              <option>Diklat & Brevet</option>
+              <option>Kajian & Riset</option>
+              <option>Humas & Tax Center</option>
+              <option>Media Kreatif</option>
+              <option>BPH</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Status Kegiatan</label>
+            <select id="edit-prk-status" class="w-full px-3 py-2 border rounded-lg">
+              <option>Terjadwal</option>
+              <option>Berjalan</option>
+              <option>Selesai</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Waktu Pelaksanaan</label>
+            <input type="text" id="edit-prk-waktu" placeholder="Desember 2026" class="w-full px-3 py-2 border rounded-lg">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Lokasi Kegiatan</label>
+            <input type="text" id="edit-prk-lokasi" placeholder="Auditorium / Zoom" class="w-full px-3 py-2 border rounded-lg">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Target Peserta</label>
+          <input type="text" id="edit-prk-target" placeholder="Mahasiswa Aktif" class="w-full px-3 py-2 border rounded-lg">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Deskripsi Kegiatan</label>
+          <textarea id="edit-prk-deskripsi" rows="3" class="w-full px-3 py-2 border rounded-lg"></textarea>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Banner Gambar</label>
+          <img id="edit-prk-banner-preview" src="" alt="Banner Preview" class="w-full h-32 object-cover rounded-lg mb-2 hidden border border-slate-200">
+          <input type="file" id="edit-prk-banner" accept="image/*" class="w-full text-slate-500 text-[11px]">
+        </div>
+        <button type="submit" id="btn-update-proker" class="w-full py-2 bg-brand-yellow font-black text-brand-navy rounded-lg mt-2">Simpan Perubahan</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

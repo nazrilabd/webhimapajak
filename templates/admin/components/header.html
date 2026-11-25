@@ -1,0 +1,43 @@
+<header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-3 sm:px-6 lg:px-8 z-20 flex-shrink-0">
+  <!-- Left: Mobile Hamburger & Page Title -->
+  <div class="flex items-center gap-2.5 sm:gap-4 overflow-hidden">
+    <button type="button" onclick="toggleMobileSidebar()" class="md:hidden text-slate-600 hover:text-brand-navy p-2 -ml-1 rounded-lg hover:bg-slate-100 transition focus:outline-none" aria-label="Buka Menu">
+      <i class="fa-solid fa-bars text-xl"></i>
+    </button>
+    <div class="overflow-hidden">
+      <h1 id="page-title-heading" class="text-sm sm:text-lg font-black text-brand-navy leading-tight truncate">
+        {% block page_heading %}{{ page_title|default:"Dashboard & Statistik Organisasi" }}{% endblock %}
+      </h1>
+      <p class="text-[11px] text-slate-400 hidden sm:block truncate">Sistem Informasi Manajemen HIMA Perpajakan UIMANDIRI</p>
+    </div>
+  </div>
+
+  <!-- Right: Actions & User Profile -->
+  <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+    <!-- Role Badge (Hidden on mobile) -->
+    <span class="hidden md:inline-flex items-center gap-1.5 bg-amber-50 text-brand-navy border border-brand-yellow/40 text-[11px] font-bold px-3 py-1 rounded-full">
+      <i class="fa-solid fa-shield-halved text-brand-yellow"></i> {{ request.user.first_name|default:request.user.username|default:"Super Admin" }}
+    </span>
+
+    <!-- Quick View Site -->
+    <a href="/" target="_blank" title="Buka Website Publik" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-brand-navy bg-slate-100 hover:bg-slate-200 p-2 sm:px-3 sm:py-2 rounded-xl transition">
+      <i class="fa-solid fa-globe text-brand-navy"></i>
+      <span class="hidden sm:inline">Web Publik</span>
+    </a>
+
+    <!-- LPJ Quick Link -->
+    <a href="/laporan/lpj-keuangan/" target="_blank" title="Unduh LPJ Keuangan" class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 p-2 sm:px-3 sm:py-2 rounded-xl transition">
+      <i class="fa-solid fa-file-pdf"></i>
+      <span class="hidden sm:inline">Unduh LPJ</span>
+    </a>
+
+    <!-- User Profile Pill -->
+    <div class="flex items-center gap-2 sm:gap-3 pl-1 sm:pl-2 border-l border-slate-200">
+      <img src="{{ profile.get_foto_ketua }}" alt="Ketua" class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl object-cover border-2 border-brand-yellow flex-shrink-0">
+      <div class="hidden lg:block text-left">
+        <div class="text-xs font-bold text-brand-navy truncate max-w-[120px]">{{ profile.nama_ketua }}</div>
+        <div class="text-[10px] text-slate-400">Ketua Umum / Admin</div>
+      </div>
+    </div>
+  </div>
+</header>

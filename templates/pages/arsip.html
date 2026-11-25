@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+
+{% block title %}Arsip Riwayat Periode - {{ profile.nama_organisasi|default:"HIMA PERPAJAKAN UIMANDIRI" }}{% endblock %}
+
+{% block content %}
+      <div class="bg-brand-navy text-white py-14">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-xs text-brand-yellow uppercase tracking-widest font-bold">Dokumentasi Sejarah</div>
+          <h1 class="text-3xl sm:text-4xl font-black mt-1">Arsip & Riwayat Periode Kepengurusan</h1>
+          <p class="text-slate-300 text-sm mt-2 max-w-2xl">Jejak kepemimpinan, susunan pengurus, dan dokumentasi setiap periode HIMA Perpajakan UIMANDIRI.</p>
+        </div>
+      </div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+        
+        <!-- Period Selector & Search (Requirement 20, 28, 126) -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3 w-full md:w-auto">
+            <span class="text-xs font-bold text-slate-600 whitespace-nowrap">Pilih Periode Kepengurusan:</span>
+            <select id="arsip-period-select" onchange="changeArsipPeriod(this.value)" class="px-4 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl text-brand-navy focus:outline-none focus:border-brand-navy">
+              {% for ar in arsip_list %}
+              <option value="{{ ar.id }}" {% if ar.aktif %}selected{% endif %}>Periode {{ ar.tahun_periode }} ({{ ar.nama_kabinet }}){% if ar.aktif %} - Sedang Aktif{% endif %}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="relative w-full md:w-72">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input type="text" id="arsip-search" placeholder="Cari nama pengurus..." onkeyup="searchArsipPengurus()" class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-navy">
+          </div>
+        </div>
+
+        <!-- Dynamic Period Content Container -->
+        <div id="arsip-content-area" class="space-y-8">
+          
+          <!-- Period Header Info -->
+          <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+              <div id="arsip-status-badge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 mb-2">
+                <i class="fa-solid fa-landmark"></i> Arsip Demisioner Terverifikasi
+              </div>
+              <h2 id="arsip-heading" class="text-2xl font-black text-brand-navy">Periode 2026/2027: Kabinet Sinergi Fiskal</h2>
+              <p id="arsip-desc" class="text-xs text-slate-500 mt-1">Masa bakti 01 September 2026 s.d. 31 Agustus 2027 &bull; SK Rektor No. 518/SK/UIM/2026</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="alert('Arsip Berita Acara Serah Terima Jabatan (BAST) telah diunduh.')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5">
+                <i class="fa-solid fa-file-contract"></i> Dokumen BAST
+              </button>
+            </div>
+          </div>
+
+          <!-- Riwayat Pimpinan (Requirement 22, 23) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-center">
+              <div class="w-20 h-20 rounded-2xl overflow-hidden mx-auto mb-3 border-2 border-slate-200 shadow bg-slate-100 flex items-center justify-center text-brand-navy text-2xl font-bold">
+                <i class="fa-solid fa-user-tie"></i>
+              </div>
+              <span class="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Ketua Umum</span>
+              <h4 class="font-bold text-sm text-brand-navy mt-2" id="arsip-ketua-nama">-</h4>
+              <p class="text-xs text-slate-500 font-mono" id="arsip-ketua-nim">-</p>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-center">
+              <div class="w-20 h-20 rounded-2xl overflow-hidden mx-auto mb-3 border-2 border-slate-200 shadow bg-slate-100 flex items-center justify-center text-brand-navy text-2xl font-bold">
+                <i class="fa-solid fa-user-group"></i>
+              </div>
+              <span class="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Wakil Ketua</span>
+              <h4 class="font-bold text-sm text-brand-navy mt-2" id="arsip-wakil-nama">-</h4>
+              <p class="text-xs text-slate-500 font-mono" id="arsip-wakil-nim">-</p>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-center">
+              <div class="w-20 h-20 rounded-2xl overflow-hidden mx-auto mb-3 border-2 border-slate-200 shadow bg-slate-100 flex items-center justify-center text-brand-navy text-2xl font-bold">
+                <i class="fa-solid fa-file-signature"></i>
+              </div>
+              <span class="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Sekretaris</span>
+              <h4 class="font-bold text-sm text-brand-navy mt-2" id="arsip-sekretaris-nama">-</h4>
+              <p class="text-xs text-slate-500 font-mono">BPH</p>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-center">
+              <div class="w-20 h-20 rounded-2xl overflow-hidden mx-auto mb-3 border-2 border-slate-200 shadow bg-slate-100 flex items-center justify-center text-brand-navy text-2xl font-bold">
+                <i class="fa-solid fa-wallet"></i>
+              </div>
+              <span class="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Bendahara</span>
+              <h4 class="font-bold text-sm text-brand-navy mt-2" id="arsip-bendahara-nama">-</h4>
+              <p class="text-xs text-slate-500 font-mono">BPH</p>
+            </div>
+
+          </div>
+
+          <!-- Anggota Struktur pada Periode Terpilih -->
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-sm text-brand-navy flex items-center gap-2">
+                  <i class="fa-solid fa-sitemap text-brand-yellow"></i>
+                  <span>Susunan Pengurus Struktur Periode Ini</span>
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">Anggota struktural divisi yang bertugas pada periode kabinet terpilih.</p>
+              </div>
+              <span id="arsip-str-count" class="text-xs font-bold text-brand-navy bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200/60">
+                0 Anggota Struktur
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="arsip-pengurus-grid">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Dokumentasi Foto Pengurus Periode (Requirement 25) -->
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <h3 class="font-bold text-sm text-brand-navy">Dokumentasi Pelantikan & Foto Bersama Pengurus Periode Terpilih</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div class="rounded-xl overflow-hidden aspect-video bg-slate-100">
+                <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover">
+              </div>
+              <div class="rounded-xl overflow-hidden aspect-video bg-slate-100">
+                <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover">
+              </div>
+              <div class="rounded-xl overflow-hidden aspect-video bg-slate-100">
+                <img src="https://images.unsplash.com/photo-1528605248644-14dd04022da1?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover">
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+{% endblock %}
+{% block extra_js %}
+<script>
+  const periodData = {
+    {% for ar in arsip_list %}
+    "{{ ar.id }}": {
+      title: "Periode {{ ar.tahun_periode }}: {{ ar.nama_kabinet }}{% if ar.aktif %} (Aktif){% endif %}",
+      desc: "Masa bakti {{ ar.masa_bakti|default:'-' }} • SK Rektor {{ ar.sk_rektor|default:'-' }}",
+      ketua: "{{ ar.nama_ketua }}",
+      nim_ketua: "{{ ar.nim_ketua|default:'' }}",
+      wakil: "{{ ar.nama_wakil|default:'-' }}",
+      nim_wakil: "{{ ar.nim_wakil|default:'' }}",
+      sekretaris: "{{ ar.nama_sekretaris|default:'-' }}",
+      bendahara: "{{ ar.nama_bendahara|default:'-' }}",
+      deskripsi: "{{ ar.deskripsi|default:''|escapejs }}",
+      aktif: {{ ar.aktif|yesno:"true,false" }},
+      tahun: "{{ ar.tahun_periode }}",
+      pengurus: [
+        {% for p in ar.pengurus_list.all %}
+        {
+          nama: "{{ p.nama|escapejs }}",
+          nim: "{{ p.nim|escapejs }}",
+          jabatan: "{{ p.jabatan|escapejs }}",
+          divisi: "{{ p.divisi|escapejs }}",
+          bio: "{{ p.bio|escapejs }}",
+          foto: "{{ p.get_foto|escapejs }}"
+        },
+        {% endfor %}
+      ]
+    },
+    {% endfor %}
+  };
+
+  function changeArsipPeriod(id) {
+    const p = periodData[id] || Object.values(periodData)[0];
+    if (!p) return;
+    document.getElementById('arsip-heading').innerText = p.title;
+    document.getElementById('arsip-desc').innerText = p.desc;
+    
+    const badgeContainer = document.getElementById('arsip-status-badge');
+    if (badgeContainer) {
+      if (p.aktif) {
+        badgeContainer.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-900 mb-2";
+        badgeContainer.innerHTML = '<i class="fa-solid fa-circle-check"></i> Periode Aktif Berjalan';
+      } else {
+        badgeContainer.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 mb-2";
+        badgeContainer.innerHTML = '<i class="fa-solid fa-landmark"></i> Arsip Demisioner Terverifikasi';
+      }
+    }
+
+    const kNama = document.getElementById('arsip-ketua-nama');
+    if (kNama) kNama.innerText = p.ketua;
+    const kNim = document.getElementById('arsip-ketua-nim');
+    if (kNim) kNim.innerText = p.nim_ketua ? ('NIM: ' + p.nim_ketua) : '-';
+
+    const wNama = document.getElementById('arsip-wakil-nama');
+    if (wNama) wNama.innerText = p.wakil;
+    const wNim = document.getElementById('arsip-wakil-nim');
+    if (wNim) wNim.innerText = p.nim_wakil ? ('NIM: ' + p.nim_wakil) : '-';
+
+    const sNama = document.getElementById('arsip-sekretaris-nama');
+    if (sNama) sNama.innerText = p.sekretaris;
+
+    const bNama = document.getElementById('arsip-bendahara-nama');
+    if (bNama) bNama.innerText = p.bendahara;
+
+    const grid = document.getElementById('arsip-pengurus-grid');
+    const countEl = document.getElementById('arsip-str-count');
+    if (grid) {
+      if (p.pengurus && p.pengurus.length > 0) {
+        if (countEl) countEl.innerText = p.pengurus.length + ' Anggota Struktur';
+        grid.innerHTML = p.pengurus.map(m => `
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center arsip-member-card">
+            <div class="w-16 h-16 rounded-xl overflow-hidden mx-auto mb-2 border border-slate-200 shadow-sm">
+              <img src="${m.foto}" alt="${m.nama}" class="w-full h-full object-cover">
+            </div>
+            <span class="bg-brand-navy text-brand-yellow text-[9px] font-black px-2 py-0.5 rounded-full uppercase">${m.divisi}</span>
+            <h4 class="font-bold text-xs text-brand-navy mt-1">${m.nama}</h4>
+            <p class="text-[11px] text-slate-500 font-semibold">${m.jabatan}</p>
+            <p class="text-[10px] text-slate-400 font-mono mt-0.5">${m.nim ? 'NIM: ' + m.nim : ''}</p>
+            ${m.bio ? `<p class="text-[10px] text-slate-500 italic mt-1 bg-slate-50 p-1.5 rounded-lg line-clamp-2">"${m.bio}"</p>` : ''}
+          </div>
+        `).join('');
+      } else {
+        if (countEl) countEl.innerText = '0 Anggota Struktur';
+        grid.innerHTML = `
+          <div class="col-span-full py-6 text-center text-slate-400 text-xs">
+            <i class="fa-solid fa-users-slash text-2xl mb-1 block"></i>
+            Belum ada anggota struktur yang ditambahkan ke periode ini.
+          </div>
+        `;
+      }
+    }
+  }
+
+  function searchArsipPengurus() {
+    const q = (document.getElementById('arsip-search').value || '').toLowerCase();
+    const cards = document.querySelectorAll('#arsip-content-area .arsip-member-card, #arsip-content-area .p-5');
+    cards.forEach(c => {
+      const text = c.innerText.toLowerCase();
+      c.style.display = (!q || text.includes(q)) ? '' : 'none';
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const sel = document.getElementById('arsip-period-select');
+    if (sel) changeArsipPeriod(sel.value);
+  });
+</script>
+{% endblock %}

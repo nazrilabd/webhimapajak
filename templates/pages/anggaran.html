@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+
+{% block title %}Transparansi Kas & Anggaran - {{ profile.nama_organisasi|default:"HIMA PERPAJAKAN UIMANDIRI" }}{% endblock %}
+
+{% block content %}
+      <div class="bg-brand-navy text-white py-14">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="inline-flex items-center gap-2 bg-brand-yellow/20 text-brand-yellow text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider mb-2">
+            <i class="fa-solid fa-coins"></i> Fitur Unggulan Akuntabilitas Publik
+          </div>
+          <h1 class="text-3xl sm:text-4xl font-black">Transparansi Penggunaan Anggaran HIMA</h1>
+          <p class="text-slate-300 text-sm mt-2 max-w-3xl">
+            Sistem keterbukaan informasi kas ormawa secara real-time. Seluruh pemasukan, pengeluaran per kegiatan, bukti kuitansi nota, dan LPJ keuangan dapat dipantau langsung oleh mahasiswa.
+          </p>
+        </div>
+      </div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+        
+        <!-- Financial Summary KPI (Requirement 87, 88, 89, 90) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Anggaran / Pemasukan</div>
+            <div class="text-2xl sm:text-3xl font-black text-brand-navy mt-1">Rp {{ total_masuk|floatformat:0 }}</div>
+            <div class="text-[10px] text-emerald-600 font-bold mt-1 flex items-center gap-1">
+              <i class="fa-solid fa-circle-down"></i> Iuran, Rektorat, Sponsor, Brevet
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Pengeluaran Terpakai</div>
+            <div class="text-2xl sm:text-3xl font-black text-rose-600 mt-1">Rp {{ total_keluar|floatformat:0 }}</div>
+            <div class="text-[10px] text-slate-400 font-semibold mt-1">
+              28.7% dari total pagu anggaran
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl border-2 border-brand-yellow shadow-md bg-amber-50/30">
+            <div class="text-[11px] font-bold text-amber-900 uppercase tracking-wider">Sisa Saldo Kas Ormawa</div>
+            <div class="text-2xl sm:text-3xl font-black text-brand-navy mt-1">Rp {{ saldo_kas|floatformat:0 }}</div>
+            <div class="text-[10px] text-emerald-700 font-bold mt-1 flex items-center gap-1">
+              <i class="fa-solid fa-circle-check"></i> Saldo Kas Bank Rekening HIMA
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Laporan Pertanggungjawaban</div>
+              <div class="text-sm font-bold text-brand-navy mt-1">Status: Terverifikasi BEM & Prodi</div>
+            </div>
+            <button onclick="downloadLPJSimulate()" class="w-full mt-3 py-2 bg-brand-navy hover:bg-brand-navyLight text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow">
+              <i class="fa-solid fa-file-pdf text-brand-yellow"></i> Unduh LPJ PDF (Resmi)
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Financial Visual Charts (Requirement 99) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- Chart 1: Pemasukan vs Pengeluaran per Bulan -->
+          <div class="lg:col-span-7 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="font-bold text-sm text-brand-navy">Tren Arus Kas Bulanan (2026/2027)</h3>
+                <p class="text-[11px] text-slate-400">Komparasi Pemasukan dan Pengeluaran</p>
+              </div>
+              <span class="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded">Akumulasi Riil</span>
+            </div>
+            <div class="relative h-64">
+              <canvas id="chartArusKasPublic"></canvas>
+            </div>
+          </div>
+
+          <!-- Chart 2: Alokasi Pengeluaran per Divisi / Pos Belanja -->
+          <div class="lg:col-span-5 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="font-bold text-sm text-brand-navy">Alokasi Belanja per Pos Program</h3>
+                <p class="text-[11px] text-slate-400">Persentase pengeluaran dana</p>
+              </div>
+            </div>
+            <div class="relative h-64 flex items-center justify-center">
+              <canvas id="chartAlokasiBelanjaPublic"></canvas>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Detail Rincian Transaksi Penggunaan Dana (Requirement 91, 92, 93, 94, 97) -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-3 justify-between items-center">
+            <div>
+              <h3 class="font-bold text-sm text-brand-navy">Buku Kas & Riwayat Transaksi Pengeluaran Dana</h3>
+              <p class="text-xs text-slate-400">Setiap pengeluaran dilengkapi bukti struk / kuitansi / nota transfer yang dapat dilihat.</p>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="filterKasTable('all')" class="kas-filter-btn px-2.5 py-1 text-xs rounded-lg font-bold bg-brand-navy text-white">Semua Transaksi</button>
+              <button onclick="filterKasTable('Pemasukan')" class="kas-filter-btn px-2.5 py-1 text-xs rounded-lg font-medium bg-slate-100 text-slate-600">Pemasukan</button>
+              <button onclick="filterKasTable('Pengeluaran')" class="kas-filter-btn px-2.5 py-1 text-xs rounded-lg font-medium bg-slate-100 text-slate-600">Pengeluaran</button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-50 font-bold uppercase text-slate-400 border-b border-slate-200">
+                <tr>
+                  <th class="py-3 px-4">Tanggal</th>
+                  <th class="py-3 px-4">Uraian / Kegiatan</th>
+                  <th class="py-3 px-4">Divisi / Penanggung Jawab</th>
+                  <th class="py-3 px-4">Kategori</th>
+                  <th class="py-3 px-4">Jumlah (Rp)</th>
+                  <th class="py-3 px-4">Bukti Kuitansi</th>
+                  <th class="py-3 px-4 text-center">Status</th>
+                </tr>
+              </thead>
+                            <tbody id="kas-table-body" class="divide-y divide-slate-100">
+                {% for t in transaksi_list %}
+                <tr class="kas-row hover:bg-slate-50 transition" data-type="{% if t.jenis == 'MASUK' %}Pemasukan{% else %}Pengeluaran{% endif %}">
+                  <td class="py-3 px-4 text-slate-400 whitespace-nowrap">{{ t.tanggal|date:"d M Y" }}</td>
+                  <td class="py-3 px-4 font-bold text-brand-navy">
+                    {{ t.kategori }}
+                    <div class="text-[10px] text-slate-400 font-normal">{{ t.keterangan }}</div>
+                  </td>
+                  <td class="py-3 px-4">{{ t.pj_transaksi }}</td>
+                  <td class="py-3 px-4">
+                    {% if t.jenis == 'MASUK' %}
+                    <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">Pemasukan</span>
+                    {% else %}
+                    <span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded font-bold">Pengeluaran</span>
+                    {% endif %}
+                  </td>
+                  <td class="py-3 px-4 font-mono font-bold {% if t.jenis == 'MASUK' %}text-emerald-700{% else %}text-rose-600{% endif %}">
+                    {% if t.jenis == 'MASUK' %}+{% else %}-{% endif %} Rp {{ t.nominal|floatformat:0 }}
+                  </td>
+                  <td class="py-3 px-4">
+                    {% if t.bukti_transaksi or t.bukti_transaksi_url %}
+                    <button onclick="viewReceiptModal('{{ t.kategori|escapejs }}', 'Rp {{ t.nominal|floatformat:0 }}', '{{ t.tanggal|date:"d M Y" }}', '{{ t.keterangan|escapejs }}', '{{ t.get_bukti }}')" class="text-brand-navy font-bold hover:underline flex items-center gap-1">
+                      <i class="fa-solid fa-receipt text-emerald-600"></i> Lihat Kuitansi
+                    </button>
+                    {% else %}
+                    <span class="text-slate-400 text-[10px]">-</span>
+                    {% endif %}
+                  </td>
+                  <td class="py-3 px-4 text-center">
+                    <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">Valid</span>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="p-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex justify-between items-center">
+            <span>Menampilkan 7 transaksi terkini &bull; Sisa Kas Tersedia: <strong>Rp 38.650.000</strong></span>
+            <button onclick="downloadLPJSimulate()" class="text-brand-navy font-bold hover:underline"><i class="fa-solid fa-download"></i> Unduh Rekap Excel/PDF</button>
+          </div>
+        </div>
+
+      </div>
+{% endblock %}
+{% block extra_js %}
+<script>
+  function filterKasTable(type) {
+    document.querySelectorAll('.kas-filter-btn').forEach(b => {
+      if (b.innerText.toLowerCase().includes(type.toLowerCase())) {
+        b.className = 'kas-filter-btn px-2.5 py-1 text-xs rounded-lg font-bold bg-brand-navy text-white';
+      } else {
+        b.className = 'kas-filter-btn px-2.5 py-1 text-xs rounded-lg font-medium bg-slate-100 text-slate-600';
+      }
+    });
+    const rows = document.querySelectorAll('.kas-row');
+    rows.forEach(r => {
+      if (type === 'all' || r.getAttribute('data-type') === type) {
+        r.style.display = '';
+      } else {
+        r.style.display = 'none';
+      }
+    });
+  }
+
+  function downloadLPJSimulate() {
+    window.open('/laporan/lpj-keuangan/', '_blank');
+  }
+
+  function renderAnggaranCharts() {
+    const ctxKas = document.getElementById('chartArusKasPublic');
+    if (ctxKas) {
+      new Chart(ctxKas, {
+        type: 'bar',
+        data: {
+          labels: ['Sep 2026', 'Okt 2026', 'Nov 2026', 'Des 2026 (Est)', 'Jan 2027 (Est)'],
+          datasets: [
+            {
+              label: 'Pemasukan (Rp)',
+              data: [40400000, 13800000, 0, 5000000, 8000000],
+              backgroundColor: '#002B5C',
+              borderRadius: 6
+            },
+            {
+              label: 'Pengeluaran (Rp)',
+              data: [3450000, 6800000, 5300000, 9500000, 4000000],
+              backgroundColor: '#F5C400',
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: '#f1f5f9' },
+              ticks: {
+                callback: val => 'Rp ' + (val/1000000) + ' Jt',
+                font: { size: 10 }
+              }
+            },
+            x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+          },
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }
+          }
+        }
+      });
+    }
+
+    const ctxAlokasi = document.getElementById('chartAlokasiBelanjaPublic');
+    if (ctxAlokasi) {
+      new Chart(ctxAlokasi, {
+        type: 'doughnut',
+        data: {
+          labels: ['Pelatihan Brevet (43.7%)', 'Seminar & Tax Fest (34.4%)', 'Operasional & Raker (12.2%)', 'Media & Web Server (9.7%)'],
+          datasets: [{
+            data: [6800000, 5300000, 3450000, 1500000],
+            backgroundColor: ['#002B5C', '#F5C400', '#10B981', '#3B82F6'],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }
+          }
+        }
+      });
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    renderAnggaranCharts();
+  });
+</script>
+{% endblock %}

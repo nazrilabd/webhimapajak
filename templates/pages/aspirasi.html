@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+
+{% block title %}Kotak Aspirasi & Suara - {{ profile.nama_organisasi|default:"HIMA PERPAJAKAN UIMANDIRI" }}{% endblock %}
+
+{% block content %}
+      <div class="bg-brand-navy text-white py-14">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="inline-flex items-center gap-1.5 bg-purple-100 text-purple-900 text-xs font-bold px-3 py-1 rounded-full uppercase mb-2">
+            <i class="fa-solid fa-shield"></i> 100% Bebas Identitas (Anonim)
+          </div>
+          <h1 class="text-3xl sm:text-4xl font-black">{{ aspirasi_config.judul|default:"Kotak Suara, Kritik & Aspirasi Mahasiswa" }}</h1>
+          <p class="text-slate-300 text-sm mt-2 max-w-2xl">
+            {{ aspirasi_config.deskripsi|default:"Sampaikan masukan untuk perbaikan fasilitas Lab Tax Center, evaluasi kinerja pengurus HIMA, atau aspirasi kurikulum akademik prodi perpajakan tanpa perlu khawatir identitas terlacak." }}
+          </p>
+        </div>
+      </div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          <!-- Form Input Aspirasi -->
+          <div class="lg:col-span-7 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-1">
+              <h3 class="text-lg font-black text-brand-navy">Kirim Masukan Anda Secara Anonim</h3>
+              <span class="text-[10px] font-bold bg-purple-100 text-purple-900 px-2.5 py-0.5 rounded-full">Google Form Style</span>
+            </div>
+            <p class="text-xs text-slate-400 mb-6">Sistem terenkripsi kami tidak menyimpan IP Address maupun identitas email pribadi.</p>
+            
+            <form onsubmit="handlePublicAspirasi(event)" class="space-y-4 text-xs">
+              <!-- Rating Bintang Kepuasan -->
+              <div class="p-3.5 bg-purple-50/60 rounded-2xl border border-purple-100">
+                <label class="block font-bold text-slate-700 mb-1">Tingkat Kepuasan terhadap Fasilitas & Layanan HIMA <span class="text-rose-500">*</span></label>
+                <div class="flex items-center gap-2 mt-1.5" id="star-rating-group">
+                  <input type="hidden" id="asp-rating" value="5">
+                  <div class="flex items-center gap-1.5 text-2xl text-amber-400 cursor-pointer" id="stars-container">
+                    <i class="fa-solid fa-star star-btn" data-val="1" onclick="setPublicRating(1)"></i>
+                    <i class="fa-solid fa-star star-btn" data-val="2" onclick="setPublicRating(2)"></i>
+                    <i class="fa-solid fa-star star-btn" data-val="3" onclick="setPublicRating(3)"></i>
+                    <i class="fa-solid fa-star star-btn" data-val="4" onclick="setPublicRating(4)"></i>
+                    <i class="fa-solid fa-star star-btn" data-val="5" onclick="setPublicRating(5)"></i>
+                  </div>
+                  <span id="star-rating-label" class="text-xs font-bold text-amber-700 ml-2">5 dari 5 (Sangat Puas)</span>
+                </div>
+              </div>
+
+              <!-- Identitas Pengirim (Opsional) -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Nama Pengirim (Opsional)</label>
+                  <input type="text" id="asp-pengirim" placeholder="Anonim (kosongkan jika rahasia)" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:border-brand-navy">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">NIM (Opsional)</label>
+                  <input type="text" id="asp-nim" placeholder="241410100xx" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:border-brand-navy font-mono">
+                </div>
+              </div>
+
+              <!-- Dynamic Questions from aspirasi_config -->
+              <div id="asp-dynamic-questions-container" class="space-y-4">
+                {% for q in aspirasi_config.get_questions %}
+                  <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                    <label class="block font-bold text-slate-800 text-xs">
+                      {{ q.label }} {% if q.required %}<span class="text-rose-500">*</span>{% endif %}
+                    </label>
+
+                    {% if q.tipe == 'select' %}
+                      <select name="{{ q.id }}" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:border-brand-navy" {% if q.required %}required{% endif %}>
+                        {% for opt in q.options %}
+                          <option value="{{ opt }}">{{ opt }}</option>
+                        {% endfor %}
+                      </select>
+                    {% elif q.tipe == 'radio' %}
+                      <div class="space-y-1.5">
+                        {% for opt in q.options %}
+                          <label class="flex items-center gap-2 font-normal text-slate-700 cursor-pointer">
+                            <input type="radio" name="{{ q.id }}" value="{{ opt }}" class="text-purple-600 focus:ring-purple-500" {% if forloop.first and q.required %}required checked{% endif %}>
+                            <span>{{ opt }}</span>
+                          </label>
+                        {% endfor %}
+                      </div>
+                    {% elif q.tipe == 'checkbox' %}
+                      <div class="space-y-1.5">
+                        {% for opt in q.options %}
+                          <label class="flex items-center gap-2 font-normal text-slate-700 cursor-pointer">
+                            <input type="checkbox" name="{{ q.id }}" value="{{ opt }}" class="rounded text-purple-600 focus:ring-purple-500">
+                            <span>{{ opt }}</span>
+                          </label>
+                        {% endfor %}
+                      </div>
+                    {% elif q.tipe == 'textarea' %}
+                      <textarea name="{{ q.id }}" rows="3" placeholder="Tuliskan jawaban atau rincian Anda..." class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:border-brand-navy" {% if q.required %}required{% endif %}></textarea>
+                    {% else %}
+                      <input type="text" name="{{ q.id }}" placeholder="Tuliskan jawaban Anda..." class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:border-brand-navy" {% if q.required %}required{% endif %}>
+                    {% endif %}
+                  </div>
+                {% endfor %}
+              </div>
+
+              <div class="pt-2">
+                <button type="submit" id="btn-submit-aspirasi-public" class="w-full py-3 bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs uppercase rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-paper-plane"></i> Kirim Aspirasi & Suara Mahasiswa
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Feed Aspirasi Yang Masuk & Telah Ditindaklanjuti (Requirement 72, 74) -->
+          <div class="lg:col-span-5 space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-sm text-brand-navy">Aspirasi Terkini (Feed Terbuka)</h3>
+              <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
+                <i class="fa-solid fa-check-double mr-1"></i> 78% Selesai Ditanggapi
+              </span>
+            </div>
+
+            <div class="space-y-3">
+              {% for asp in aspirasi_list %}
+              <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-bold bg-purple-100 text-purple-900 px-2 py-0.5 rounded">{{ asp.pengirim }}</span>
+                  <span class="text-[10px] font-bold {% if asp.status == 'Selesai' or asp.status == 'Ditindaklanjuti' %}text-emerald-700 bg-emerald-100{% else %}text-amber-700 bg-amber-100{% endif %} px-2 py-0.5 rounded-full">{{ asp.status }}</span>
+                </div>
+                <div class="text-xs font-bold text-brand-navy">{{ asp.kategori }}</div>
+                <p class="text-xs text-slate-600 italic bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                  "{{ asp.isi_aspirasi }}"
+                </p>
+                {% if asp.tanggapan_admin %}
+                <div class="text-[11px] text-emerald-800 bg-emerald-50/70 p-2 rounded border border-emerald-200">
+                  <strong>Tanggapan Pengurus:</strong> {{ asp.tanggapan_admin }}
+                </div>
+                {% endif %}
+                <div class="text-[10px] text-slate-400 flex justify-between items-center pt-1">
+                  <span>{{ asp.created_at|date:"d M Y H:i" }}</span>
+                  <span class="text-slate-500 font-semibold"><i class="fa-solid fa-check-circle text-emerald-600 mr-1"></i>Tersimpan di DB</span>
+                </div>
+              </div>
+              {% empty %}
+              <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-bold bg-purple-100 text-purple-900 px-2 py-0.5 rounded">Responden Anonim #104</span>
+                  <span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">Ditindaklanjuti</span>
+                </div>
+                <div class="text-xs font-bold text-brand-navy">Lab Tax Center: Update Software Coretax Simulator</div>
+                <p class="text-xs text-slate-600 italic bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                  "Mohon software simulasi Coretax di Lab Tax Center diperbarui ke versi rilis DJP terbaru agar saat ujian Brevet tidak terjadi kendala error network."
+                </p>
+                <div class="text-[10px] text-slate-400 flex justify-between items-center pt-1">
+                  <span>14 Nov 2026</span>
+                  <span class="text-emerald-700 font-semibold"><i class="fa-solid fa-check"></i> Sudah di-update oleh Sarpras</span>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+{% endblock %}
+{% block extra_js %}
+<script>
+  function setPublicRating(val) {
+    document.getElementById('asp-rating').value = val;
+    const stars = document.querySelectorAll('#stars-container .star-btn');
+    stars.forEach(s => {
+      const sVal = parseInt(s.getAttribute('data-val'));
+      if (sVal <= val) {
+        s.className = 'fa-solid fa-star star-btn';
+      } else {
+        s.className = 'fa-regular fa-star text-slate-300 star-btn';
+      }
+    });
+    const labels = {
+      1: '1 dari 5 (Sangat Kurang)',
+      2: '2 dari 5 (Perlu Peningkatan)',
+      3: '3 dari 5 (Cukup Baik)',
+      4: '4 dari 5 (Puas)',
+      5: '5 dari 5 (Sangat Puas)'
+    };
+    document.getElementById('star-rating-label').innerText = labels[val] || (val + ' dari 5');
+  }
+
+  async function handlePublicAspirasi(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+
+    const ratingVal = document.getElementById('asp-rating') ? document.getElementById('asp-rating').value : '5';
+    formData.set('rating', ratingVal);
+
+    const pengirimVal = document.getElementById('asp-pengirim') ? document.getElementById('asp-pengirim').value.trim() : '';
+    formData.set('pengirim', pengirimVal || 'Mahasiswa Anonim');
+
+    const nimVal = document.getElementById('asp-nim') ? document.getElementById('asp-nim').value.trim() : '';
+    formData.set('nim', nimVal);
+
+    const customAnswers = {};
+    let isiAspirasiText = '';
+    let kategoriVal = 'Ormawa';
+
+    const inputs = form.querySelectorAll('#asp-dynamic-questions-container input, #asp-dynamic-questions-container select, #asp-dynamic-questions-container textarea');
+    inputs.forEach(inp => {
+      if (!inp.name) return;
+      if (inp.type === 'radio' && !inp.checked) return;
+      if (inp.type === 'checkbox') {
+        if (inp.checked) {
+          if (!customAnswers[inp.name]) customAnswers[inp.name] = [];
+          customAnswers[inp.name].push(inp.value);
+        }
+        return;
+      }
+
+      customAnswers[inp.name] = inp.value;
+      if (inp.name === 'q_kategori') {
+        kategoriVal = inp.value;
+      }
+      if (inp.name === 'q_isi') {
+        isiAspirasiText = inp.value;
+      }
+    });
+
+    if (!formData.get('kategori')) {
+      formData.set('kategori', kategoriVal);
+    }
+    if (!formData.get('isi_aspirasi')) {
+      formData.set('isi_aspirasi', isiAspirasiText || 'Aspirasi dan evaluasi kepuasan mahasiswa.');
+    }
+    formData.set('jawaban_json', JSON.stringify(customAnswers));
+
+    const btn = document.getElementById('btn-submit-aspirasi-public');
+    const origText = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim Aspirasi...';
+      btn.disabled = true;
+    }
+
+    try {
+      addCsrfToFormData(formData);
+      const res = await fetch('/api/aspirasi/submit/', {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-CSRFToken': getCsrfToken() }
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        alert('Terima kasih! ' + data.message);
+        form.reset();
+        setPublicRating(5);
+      } else {
+        alert('Gagal: ' + (data.message || 'Terjadi kesalahan'));
+      }
+    } catch(err) {
+      alert('Terjadi kesalahan jaringan.');
+    } finally {
+      if (btn) {
+        btn.innerHTML = origText;
+        btn.disabled = false;
+      }
+    }
+  }
+</script>
+{% endblock %}

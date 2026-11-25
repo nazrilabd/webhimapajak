@@ -1,0 +1,110 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Dashboard & Statistik Organisasi - HIMA PERPAJAKAN UIMANDIRI{% endblock %}
+
+{% block page_heading %}Dashboard & Statistik Organisasi{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+<!-- Banner Sambutan -->
+        <div class="bg-gradient-to-r from-brand-navy to-brand-navyLight text-white rounded-3xl p-6 sm:p-8 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div class="space-y-2">
+            <div class="inline-flex items-center gap-1.5 bg-brand-yellow text-brand-navy text-[10px] font-black px-3 py-0.5 rounded uppercase">
+              <i class="fa-solid fa-scale-balanced"></i> Portal Resmi HIMA Perpajakan UIMANDIRI
+            </div>
+            <h2 class="text-xl sm:text-2xl font-black">Panel Pengelolaan Konten & Keuangan Transparan</h2>
+            <p class="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
+              Pantau arus kas saldo ormawa, kelola formulir brevet & relawan pajak, serta atur data anggota dan kegiatan terintegrasi Cloudinary dan Neon PostgreSQL.
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="switchTab('anggaran')" class="bg-brand-yellow hover:bg-brand-yellowHover text-brand-navy font-black text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
+              <i class="fa-solid fa-coins"></i> Buku Kas Bendahara
+            </button>
+            <button onclick="openFormBuilderModal()" class="bg-white/10 hover:bg-white/20 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 border border-white/20">
+              <i class="fa-solid fa-plus"></i> Buat Form Baru
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 KPI Metrics -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <div class="text-[11px] font-bold text-slate-400 uppercase">Total Mahasiswa Pajak</div>
+              <div class="text-2xl sm:text-3xl font-black text-brand-navy mt-1">{{ kpi.total_mahasiswa|default:kpi.total_anggota }}</div>
+              <div class="text-[11px] text-emerald-600 font-bold mt-1 flex items-center gap-1.5">
+                <span class="inline-flex items-center gap-1"><i class="fa-solid fa-circle-check"></i> {{ kpi.total_mahasiswa_aktif }} Aktif</span>
+                <span>&bull;</span>
+                <span class="inline-flex items-center gap-1 text-blue-600"><i class="fa-solid fa-graduation-cap"></i> {{ kpi.total_alumni }} Alumni</span>
+              </div>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-amber-50 text-brand-navy flex items-center justify-center text-xl">
+              <i class="fa-solid fa-user-graduate text-brand-navy"></i>
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <div class="text-[11px] font-bold text-slate-400 uppercase">Sisa Saldo Kas HIMA</div>
+              <div class="text-xl sm:text-2xl font-black text-emerald-600 mt-1">Rp {{ kpi.saldo_kas|floatformat:0 }}</div>
+              <div class="text-[11px] text-slate-500 font-semibold mt-1">
+                Masuk: Rp {{ kpi.total_masuk|floatformat:0 }}
+              </div>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-xl">
+              <i class="fa-solid fa-wallet"></i>
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <div class="text-[11px] font-bold text-slate-400 uppercase">Pendaftar Brevet & Event</div>
+              <div class="text-2xl sm:text-3xl font-black text-brand-navy mt-1">{{ kpi.total_respon }}</div>
+              <div class="text-[11px] text-blue-600 font-bold mt-1">
+                <i class="fa-solid fa-circle-check"></i> Dari {{ kpi.total_formulir }} formulir
+              </div>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-800 flex items-center justify-center text-xl">
+              <i class="fa-solid fa-file-pen"></i>
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <div class="text-[11px] font-bold text-slate-400 uppercase">Aspirasi Mahasiswa</div>
+              <div class="text-2xl sm:text-3xl font-black text-purple-700 mt-1">{{ kpi.aspirasi_pending }}</div>
+              <div class="text-[11px] text-purple-600 font-bold mt-1">
+                <i class="fa-solid fa-shield"></i> Perlu Ditanggapi
+              </div>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-800 flex items-center justify-center text-xl">
+              <i class="fa-solid fa-comment-dots"></i>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 3 Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 class="font-bold text-sm text-brand-navy">Proporsi Anggota per Divisi</h3>
+            <p class="text-[11px] text-slate-400 mb-3">Distribusi 5 bidang kepengurusan</p>
+            <div class="h-56 relative"><canvas id="chartDivisiAdmin"></canvas></div>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 class="font-bold text-sm text-brand-navy">Realisasi Program Kerja Bulanan</h3>
+            <p class="text-[11px] text-slate-400 mb-3">Proker terlaksana vs rencana</p>
+            <div class="h-56 relative"><canvas id="chartKegiatanAdmin"></canvas></div>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 class="font-bold text-sm text-brand-navy">Arus Kas Masuk vs Keluar</h3>
+            <p class="text-[11px] text-slate-400 mb-3">Pemasukan & belanja bulanan (Juta Rp)</p>
+            <div class="h-56 relative"><canvas id="chartKasAdmin"></canvas></div>
+          </div>
+        </div>
+</div>
+{% endblock %}

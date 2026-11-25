@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Pengurus - HIMA PERPAJAKAN UIMANDIRI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              navy: '#002B5C',
+              navyLight: '#083d7c',
+              navyDark: '#001e40',
+              yellow: '#F5C400',
+              yellowHover: '#e0b300',
+              yellowLight: '#fff9e6'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .hero-pattern {
+      background-color: #002B5C;
+      background-image: radial-gradient(rgba(245, 196, 0, 0.15) 1px, transparent 1px), radial-gradient(rgba(255, 255, 255, 0.08) 1px, #002B5C 1px);
+      background-size: 40px 40px;
+      background-position: 0 0, 20px 20px;
+    }
+  </style>
+</head>
+<body class="hero-pattern min-h-screen flex items-center justify-center p-4">
+
+  <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8 border border-slate-100 relative overflow-hidden">
+    <!-- Top accent bar -->
+    <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-brand-yellow via-amber-400 to-brand-navy"></div>
+
+    <!-- Header Logo -->
+    <div class="text-center mb-6">
+      <div class="w-16 h-16 rounded-2xl bg-brand-navy text-brand-yellow flex items-center justify-center text-3xl mx-auto shadow-lg mb-3">
+        <i class="fa-solid fa-scale-balanced"></i>
+      </div>
+      <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-brand-yellow/20 text-brand-navy mb-2">
+        <i class="fa-solid fa-building-columns"></i> Universitas Insan Mandiri
+      </div>
+      <h2 class="text-2xl font-black text-brand-navy">Portal Pengurus HIMA</h2>
+      <p class="text-xs text-slate-500 mt-0.5">Sistem Pengelolaan Informasi HIMA Perpajakan UIMANDIRI</p>
+    </div>
+
+    <!-- Quick Role Switcher for Demo -->
+    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 mb-5">
+      <div class="text-[10px] font-bold uppercase text-slate-400 mb-1.5 text-center">Pilih Simulasi Role Akun:</div>
+      <div class="grid grid-cols-3 gap-1.5 text-[11px] font-bold">
+        <button type="button" onclick="selectRole('ketua')" class="role-btn py-1 px-2 rounded-lg bg-brand-navy text-white text-center" id="role-btn-ketua">Ketua</button>
+        <button type="button" onclick="selectRole('bendahara')" class="role-btn py-1 px-2 rounded-lg bg-white border border-slate-200 text-slate-700 text-center hover:bg-slate-100" id="role-btn-bendahara">Bendahara</button>
+        <button type="button" onclick="selectRole('sekretaris')" class="role-btn py-1 px-2 rounded-lg bg-white border border-slate-200 text-slate-700 text-center hover:bg-slate-100" id="role-btn-sekretaris">Sekretaris</button>
+      </div>
+    </div>
+
+    <!-- Demo Notice -->
+    <div class="bg-amber-50 border border-brand-yellow/40 rounded-xl p-3 mb-5 text-xs text-amber-950 flex items-start gap-2.5">
+      <i class="fa-solid fa-circle-info text-brand-navy mt-0.5"></i>
+      <div>
+        <span class="font-bold">Akses Instan Pengurus:</span>
+        Kredensial otomatis terisi di bawah. Anda dapat langsung menekan tombol masuk menuju panel admin.
+      </div>
+    </div>
+
+    <!-- Form -->
+    <form action="/login/" method="POST" onsubmit="handleLogin(event)" class="space-y-4">
+      {% csrf_token %}
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Email Pengurus / NIM</label>
+        <div class="relative">
+          <i class="fa-regular fa-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+          <input type="text" name="email" id="login-email" value="ketua@himapajak-uimandiri.ac.id" required class="w-full pl-10 pr-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-navy font-medium">
+        </div>
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <label class="block text-xs font-bold text-slate-700">Kata Sandi</label>
+          <a href="#" onclick="alert('Demo: Silakan langsung klik Masuk Dashboard Admin.')" class="text-[11px] text-brand-navy hover:underline">Lupa sandi?</a>
+        </div>
+        <div class="relative">
+          <i class="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+          <input type="password" name="password" id="login-pass" value="••••••••••••" required class="w-full pl-10 pr-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-navy font-medium">
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-600 pt-1">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" checked class="rounded text-brand-navy focus:ring-0">
+          <span>Ingat sesi pengurus di perangkat ini</span>
+        </label>
+      </div>
+
+      <button type="submit" class="w-full py-3.5 bg-brand-yellow hover:bg-brand-yellowHover text-brand-navy font-black rounded-xl shadow-md transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2 text-xs uppercase mt-2">
+        <i class="fa-solid fa-arrow-right-to-bracket"></i>
+        <span>Masuk Dashboard Admin</span>
+      </button>
+    </form>
+
+    <!-- Bottom link to public site -->
+    <div class="mt-6 pt-5 border-t border-slate-100 text-center">
+      <a href="/" class="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-brand-navy transition">
+        <i class="fa-solid fa-arrow-left"></i> Kembali ke Beranda Publik
+      </a>
+    </div>
+  </div>
+
+  <script>
+    function selectRole(role) {
+      document.querySelectorAll('.role-btn').forEach(b => {
+        b.className = 'role-btn py-1 px-2 rounded-lg bg-white border border-slate-200 text-slate-700 text-center hover:bg-slate-100';
+      });
+      document.getElementById('role-btn-' + role).className = 'role-btn py-1 px-2 rounded-lg bg-brand-navy text-white text-center';
+
+      const emailInput = document.getElementById('login-email');
+      if (role === 'ketua') {
+        emailInput.value = 'ketua@himapajak-uimandiri.ac.id';
+      } else if (role === 'bendahara') {
+        emailInput.value = 'bendahara@himapajak-uimandiri.ac.id';
+      } else if (role === 'sekretaris') {
+        emailInput.value = 'sekretaris@himapajak-uimandiri.ac.id';
+      }
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+      try {
+        const res = await fetch('/login/', {
+          method: 'POST',
+          body: formData,
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await res.json();
+        if (data.redirect) {
+          window.location.href = data.redirect;
+        } else {
+          window.location.href = '/admin-dashboard/';
+        }
+      } catch(err) {
+        window.location.href = '/admin-dashboard/';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Kelola Galeri & Dokumentasi - HIMA PERPAJAKAN UIMANDIRI{% endblock %}
+
+{% block page_heading %}Kelola Galeri & Dokumentasi{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+<div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-black text-brand-navy">Kelola Galeri & Dokumentasi Kegiatan</h2>
+            <p class="text-xs text-slate-400">Upload foto resolusi tinggi ke Cloudinary Storage.</p>
+          </div>
+          <button onclick="openAddGaleriModal()" class="bg-brand-yellow hover:bg-brand-yellowHover text-brand-navy font-black text-xs px-4 py-2.5 rounded-xl shadow transition">
+            + Upload Foto Baru
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {% for g in galeri_list %}
+          <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col justify-between" id="galeri-card-{{ g.id }}">
+            <img src="{{ g.get_gambar }}" class="aspect-video object-cover w-full">
+            <div class="p-3">
+              <span class="text-[9px] font-bold bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded uppercase">{{ g.kategori }}</span>
+              <h4 class="text-xs font-bold text-brand-navy mt-1 truncate">{{ g.judul }}</h4>
+              <p class="text-[10px] text-slate-400 mt-0.5">{{ g.tanggal_kegiatan|date:"d M Y" }}</p>
+              <div class="mt-2 flex items-center justify-between pt-2 border-t border-slate-100">
+                <button onclick="openEditGaleriModal({{ g.id }})" class="text-brand-navy hover:text-brand-navyLight text-[11px] font-bold flex items-center gap-1">
+                  <i class="fa-solid fa-pen-to-square"></i> Edit
+                </button>
+                <button onclick="deleteGaleri({{ g.id }})" class="text-rose-500 hover:text-rose-700 text-[11px] font-bold flex items-center gap-1">
+                  <i class="fa-solid fa-trash-can"></i> Hapus Foto
+                </button>
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="col-span-4 text-center py-8 text-slate-400 bg-white rounded-2xl border border-slate-200">Belum ada foto galeri.</div>
+          {% endfor %}
+        </div>
+
+      </div>
+
+      <!-- ==================== TAB 11: PROFIL ORGANISASI ==================== -->
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- MODAL: ADD GALERI -->
+  <div id="modal-add-galeri" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
+      <button onclick="closeAddGaleriModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl"><i class="fa-solid fa-xmark"></i></button>
+      <h3 class="text-base font-black text-brand-navy">Upload Foto Galeri Dokumentasi</h3>
+      <form onsubmit="handleAddGaleriSubmit(event)" enctype="multipart/form-data" class="mt-4 space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Judul Foto Dokumentasi</label>
+          <input type="text" id="glr-judul" required class="w-full px-3 py-2 border rounded-lg">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Kategori Kegiatan</label>
+          <select id="glr-kategori" class="w-full px-3 py-2 border rounded-lg">
+            <option>Pelatihan Brevet</option>
+            <option>Seminar & Workshop</option>
+            <option>Rapat Kerja</option>
+            <option>Bakti Sosial & Edukasi</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Pilih File Foto (Cloudinary)</label>
+          <input type="file" id="glr-file" accept="image/*" required class="w-full text-slate-500 text-[11px]">
+        </div>
+        <button type="submit" id="btn-save-galeri" class="w-full py-2 bg-brand-yellow font-black text-brand-navy rounded-lg mt-2">Upload ke Cloudinary & Database</button>
+      </form>
+    </div>
+  </div>
+
+
+
+  <!-- MODAL: EDIT GALERI -->
+  <div id="modal-edit-galeri" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeEditGaleriModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl"><i class="fa-solid fa-xmark"></i></button>
+      <div class="flex items-center gap-2 mb-1">
+        <span class="w-2.5 h-2.5 rounded-full bg-brand-yellow"></span>
+        <h3 class="text-base font-black text-brand-navy">Edit Dokumentasi Galeri</h3>
+      </div>
+      <p class="text-slate-400 text-[11px] mb-3">Perbarui judul, kategori, atau ganti foto dokumentasi.</p>
+      
+      <form onsubmit="handleEditGaleriSubmit(event)" enctype="multipart/form-data" class="space-y-3 text-xs">
+        <input type="hidden" id="edit-glr-id">
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Judul Foto Dokumentasi</label>
+          <input type="text" id="edit-glr-judul" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-brand-navy">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Kategori Kegiatan</label>
+            <select id="edit-glr-kategori" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-brand-navy">
+              <option>Pelatihan Brevet</option>
+              <option>Seminar & Workshop</option>
+              <option>Rapat Kerja</option>
+              <option>Bakti Sosial & Edukasi</option>
+              <option>Tax Center</option>
+              <option>Kegiatan Ormawa</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Tanggal Kegiatan</label>
+            <input type="date" id="edit-glr-tanggal" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-brand-navy">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Keterangan / Deskripsi Foto</label>
+          <textarea id="edit-glr-keterangan" rows="2" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-brand-navy"></textarea>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Foto Saat Ini</label>
+          <img id="edit-glr-gambar-preview" src="" class="w-full h-32 object-cover rounded-xl mb-2 border border-slate-200">
+          <label class="block font-bold text-slate-600 mb-1">Ganti File Foto (Opsional)</label>
+          <input type="file" id="edit-glr-file" accept="image/*" class="w-full text-slate-500 text-[11px]">
+        </div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeEditGaleriModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-semibold">Batal</button>
+          <button type="submit" id="btn-update-galeri" class="px-5 py-2 bg-brand-yellow hover:bg-brand-yellowHover font-black text-brand-navy rounded-xl shadow">Simpan Perubahan Galeri</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

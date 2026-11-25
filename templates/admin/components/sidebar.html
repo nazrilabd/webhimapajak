@@ -1,0 +1,114 @@
+<aside id="admin-sidebar" class="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-brand-navyDark text-slate-300 flex flex-col flex-shrink-0 border-r border-white/10 transform -translate-x-full md:translate-x-0 md:static transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none">
+  <!-- Sidebar Brand Header -->
+  <div class="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between gap-3">
+    <div class="flex items-center gap-3 overflow-hidden">
+      <div class="w-10 h-10 rounded-xl bg-brand-yellow text-brand-navy flex items-center justify-center font-black text-xl shadow flex-shrink-0">
+        <i class="fa-solid fa-scale-balanced"></i>
+      </div>
+      <div class="overflow-hidden">
+        <h2 class="text-sm font-black text-white leading-tight truncate">HIMA PERPAJAKAN</h2>
+        <span class="text-[10px] text-brand-yellow font-bold uppercase tracking-wider block">Admin Control Panel</span>
+      </div>
+    </div>
+    <!-- Mobile close button -->
+    <button type="button" onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition" aria-label="Tutup menu">
+      <i class="fa-solid fa-xmark text-lg"></i>
+    </button>
+  </div>
+
+  <!-- Sidebar Navigation Links -->
+  <nav class="flex-1 overflow-y-auto p-3 space-y-1 text-xs font-semibold">
+    <div class="text-[10px] uppercase font-bold text-slate-500 px-3 pt-2 pb-1">Utama & Keuangan</div>
+    
+    <a href="{% url 'admin_dashboard' %}" class="sidebar-link {% if active_menu == 'dashboard' %}active{% endif %} w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg hover:bg-white/5 hover:text-white transition" id="tab-btn-dashboard">
+      <i class="fa-solid fa-chart-pie w-4 text-slate-400"></i>
+      <span>Dashboard & Statistik</span>
+    </a>
+
+    <a href="{% url 'admin_anggaran' %}" class="sidebar-link {% if active_menu == 'anggaran' %}active{% endif %} w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg hover:bg-white/5 hover:text-white transition" id="tab-btn-anggaran">
+      <i class="fa-solid fa-coins w-4 text-slate-400"></i>
+      <span>Buku Kas & Anggaran</span>
+      <span class="ml-auto bg-emerald-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">Live</span>
+    </a>
+
+    <div class="text-[10px] uppercase font-bold text-slate-500 px-3 pt-3 pb-1">Layanan & Partisipasi</div>
+
+    <a href="{% url 'admin_formulir' %}" class="sidebar-link {% if active_menu == 'formulir' %}active{% endif %} w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg hover:bg-white/5 hover:text-white transition" id="tab-btn-form-builder">
+      <i class="fa-solid fa-wand-magic-sparkles w-4 text-slate-400"></i>
+      <span>Formulir & Respon</span>
+    </a>
+
+    <a href="{% url 'admin_aspirasi' %}" class="sidebar-link {% if active_menu == 'aspirasi' %}active{% endif %} w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg hover:bg-white/5 hover:text-white transition" id="tab-btn-aspirasi">
+      <i class="fa-solid fa-comment-dots w-4 text-slate-400"></i>
+      <span>Aspirasi Mahasiswa</span>
+      <span class="ml-auto bg-amber-400 text-brand-navy font-bold text-[9px] px-1.5 py-0.5 rounded">{{ kpi.aspirasi_pending }}</span>
+    </a>
+
+    <div class="text-[10px] uppercase font-bold text-slate-500 px-3 pt-3 pb-1">Internal Organisasi</div>
+
+    <a href="{% url 'admin_anggota' %}" class="sidebar-link {% if active_menu == 'anggota' %}active{% endif %} w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg hover:bg-white/5 hover:text-white transition" id="tab-btn-anggota">
+      <i class="fa-solid fa-user-graduate w-4 text-slate-400"></i>
+      <span>Data Mahasiswa Pajak</span>
+    </a>
+
+    <a href="{% url 'admin_struktur' %}" class="sidebar-link {% if active_menu == 'struktur' %}active{% endif %} w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg hover:bg-white/5 hover:text-white transition" id="tab-btn-struktur">
+      <i class="fa-solid fa-sitemap w-4 text-slate-400"></i>
+      <span>Struktur Pengurus</span>
+    </a>
+
+    <a href="{% url 'admin_arsip' %}" class="sidebar-link {% if active_menu == 'arsip' %}active{% endif %} w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg hover:bg-white/5 hover:text-white transition" id="tab-btn-arsip">
+      <i class="fa-solid fa-clock-rotate-left w-4 text-slate-400"></i>
+      <span>Arsip Kepengurusan</span>
+    </a>
+
+    <a href="{% url 'admin_proker' %}" class="sidebar-link {% if active_menu == 'proker' %}active{% endif %} w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg hover:bg-white/5 hover:text-white transition" id="tab-btn-proker">
+      <i class="fa-solid fa-calendar-check w-4 text-slate-400"></i>
+      <span>Program Kerja</span>
+    </a>
+
+    <div class="text-[10px] uppercase font-bold text-slate-500 px-3 pt-3 pb-1">Publikasi & Media</div>
+
+    <a href="{% url 'admin_berita' %}" class="sidebar-link {% if active_menu == 'berita' %}active{% endif %} w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg hover:bg-white/5 hover:text-white transition" id="tab-btn-berita">
+      <i class="fa-regular fa-newspaper w-4 text-slate-400"></i>
+      <span>Berita & Pengumuman</span>
+    </a>
+
+    <a href="{% url 'admin_galeri' %}" class="sidebar-link {% if active_menu == 'galeri' %}active{% endif %} w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg hover:bg-white/5 hover:text-white transition" id="tab-btn-galeri">
+      <i class="fa-solid fa-photo-film w-4 text-slate-400"></i>
+      <span>Galeri Dokumentasi</span>
+    </a>
+
+    <a href="{% url 'admin_profil' %}" class="sidebar-link {% if active_menu == 'profil' %}active{% endif %} w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg hover:bg-white/5 hover:text-white transition" id="tab-btn-profil">
+      <i class="fa-solid fa-building-columns w-4 text-slate-400"></i>
+      <span>Profil Organisasi</span>
+    </a>
+
+    <div class="text-[10px] uppercase font-bold text-slate-500 px-3 pt-3 pb-1">Sistem & Keamanan</div>
+
+    <a href="{% url 'admin_users' %}" class="sidebar-link {% if active_menu == 'multi-admin' %}active{% endif %} w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg hover:bg-white/5 hover:text-white transition" id="tab-btn-multi-admin">
+      <i class="fa-solid fa-user-shield w-4 text-slate-400"></i>
+      <span>Akun Pengelola</span>
+    </a>
+
+    <a href="{% url 'admin_audit_log' %}" class="sidebar-link {% if active_menu == 'audit-log' %}active{% endif %} w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg hover:bg-white/5 hover:text-white transition" id="tab-btn-audit-log">
+      <i class="fa-solid fa-fingerprint w-4 text-slate-400"></i>
+      <span>Audit Log Aktivitas</span>
+    </a>
+  </nav>
+
+  <!-- Sidebar Bottom User Pill & Logout -->
+  <div class="p-3 border-t border-white/10 flex items-center justify-between">
+    <div class="flex items-center gap-2.5 overflow-hidden">
+      <div class="w-8 h-8 rounded-lg bg-brand-yellow/20 text-brand-yellow flex items-center justify-center font-bold flex-shrink-0">
+        <i class="fa-solid fa-user"></i>
+      </div>
+      <div class="overflow-hidden">
+        <div class="text-xs font-bold text-white truncate">{{ request.user.username|default:"Admin" }}</div>
+        <div class="text-[10px] text-emerald-400">Online • Neon DB</div>
+      </div>
+    </div>
+    <a href="/logout/" title="Keluar Akun" class="text-slate-400 hover:text-rose-400 p-2 rounded-lg hover:bg-white/5 transition">
+      <i class="fa-solid fa-right-from-bracket"></i>
+    </a>
+  </div>
+</aside>

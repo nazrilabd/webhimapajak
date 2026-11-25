@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Struktur Kepengurusan - {{ profile.nama_organisasi|default:"HIMA PERPAJAKAN UIMANDIRI" }}{% endblock %}
+
+{% block content %}
+      <div class="bg-brand-navy text-white py-14">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-xs text-brand-yellow uppercase tracking-widest font-bold">Struktur Kepemimpinan</div>
+          <h1 class="text-3xl sm:text-4xl font-black mt-1">Struktur Kepengurusan Aktif ({{ active_periode.tahun_periode|default:"2026/2027" }})</h1>
+          <p class="text-slate-300 text-sm mt-2 max-w-2xl">{{ active_periode.nama_kabinet|default:"Kabinet Sinergi Fiskal" }} &bull; Profil pimpinan dan pembagian divisi HIMA Perpajakan UIMANDIRI.</p>
+        </div>
+      </div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 space-y-12">
+        
+        <!-- Pimpinan & Pengurus Struktural Dinamis -->
+        <div>
+          <div class="text-center mb-8">
+            <span class="text-xs font-bold text-brand-navy uppercase tracking-wider bg-amber-100 px-3 py-1 rounded-full">Struktur Kepengurusan Aktif ({{ active_periode.tahun_periode|default:"2026/2027" }})</span>
+            <h3 class="text-2xl font-black text-brand-navy mt-2">Susunan Pengurus {{ active_periode.nama_kabinet|default:"Kabinet Sinergi Fiskal" }}</h3>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for s in struktur_list %}
+            <div class="bg-white rounded-3xl p-6 border {% if 'Ketua' in s.jabatan %}border-2 border-brand-yellow shadow-md{% else %}border border-slate-200 shadow-sm{% endif %} text-center group hover:-translate-y-1 transition duration-300">
+              <div class="w-32 h-32 rounded-2xl overflow-hidden mx-auto mb-4 border border-slate-200 shadow">
+                <img src="{{ s.get_foto }}" alt="{{ s.nama }}" class="w-full h-full object-cover">
+              </div>
+              <span class="bg-brand-navy text-brand-yellow text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">{{ s.jabatan }}</span>
+              <h4 class="font-black text-base text-brand-navy mt-2">{{ s.nama }}</h4>
+              <p class="text-xs text-slate-500 font-mono">NIM: {{ s.nim }}</p>
+              <div class="inline-block bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded mt-1">{{ s.divisi }}</div>
+              <p class="text-[11px] text-slate-600 mt-2 italic bg-slate-50 p-2 rounded-lg">"{{ s.bio }}"</p>
+              <button onclick="openMemberDetailModal('{{ s.nama|escapejs }}', '{{ s.jabatan|escapejs }}', '{{ s.divisi|escapejs }}', '{{ s.nim|escapejs }}', '{{ s.bio|escapejs }}')" class="mt-3 text-xs text-brand-navy font-bold hover:underline">
+                Lihat Uraian Tugas <i class="fa-solid fa-chevron-right text-[9px]"></i>
+              </button>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+      </div>
+{% endblock %}
+

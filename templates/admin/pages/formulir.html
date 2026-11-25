@@ -1,0 +1,447 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Sistem Formulir Online & Respon - HIMA PERPAJAKAN UIMANDIRI{% endblock %}
+
+{% block page_heading %}Sistem Formulir Online & Respon{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <div>
+            <div class="inline-flex items-center gap-1.5 bg-blue-100 text-blue-900 text-[10px] font-black px-2.5 py-0.5 rounded uppercase">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Form Builder & Google Form Response Analytics
+            </div>
+            <h2 class="text-xl font-black text-brand-navy mt-1">Pembuat Formulir Online & Analisis Respon</h2>
+            <p class="text-xs text-slate-400">Atur pertanyaan formulir secara dinamis seperti Google Forms, pantau jumlah responden, dan lihat grafik statistik respon interaktif.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="openManageKategoriFormModal()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
+              <i class="fa-solid fa-tags"></i> Kelola Kategori Gform
+            </button>
+            <button onclick="openFormBuilderModal()" class="bg-brand-yellow hover:bg-brand-yellowHover text-brand-navy font-black text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+              <i class="fa-solid fa-plus"></i> Buat Formulir Baru (Google Form)
+            </button>
+          </div>
+        </div>
+
+        <!-- Daftar Formulir Aktif & Editable Questions -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {% for f in formulir_list %}
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition" id="form-card-{{ f.id }}">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[10px] font-bold {% if f.is_active %}bg-emerald-100 text-emerald-800{% else %}bg-slate-100 text-slate-600{% endif %} px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full {% if f.is_active %}bg-emerald-500 animate-pulse{% else %}bg-slate-400{% endif %}"></span>
+                  {% if f.is_active %}Aktif Menerima Respon{% else %}Pendaftaran Ditutup{% endif %}
+                </span>
+                <span class="text-[10px] font-bold bg-blue-50 text-blue-800 px-2 py-0.5 rounded-full font-mono">
+                  <i class="fa-solid fa-list-check"></i> {{ f.get_questions|length }} Pertanyaan
+                </span>
+              </div>
+              
+              <h4 class="font-black text-base text-brand-navy mt-1">{{ f.judul }}</h4>
+              <p class="text-xs text-slate-500 mt-1 line-clamp-2">{{ f.deskripsi }}</p>
+              
+              <div class="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-100 text-[11px] space-y-2">
+                <div class="flex justify-between items-center text-slate-600 font-medium">
+                  <span>Kategori: <strong class="text-brand-navy">{{ f.kategori }}</strong></span>
+                  <span>Batas: <strong class="text-slate-800">{{ f.deadline|date:"d M Y"|default:"Tanpa Batas" }}</strong></span>
+                </div>
+                
+                <div>
+                  <div class="flex justify-between items-center text-[10px] font-bold text-slate-500 mb-1">
+                    <span>Responden Masuk</span>
+                    <span class="font-mono text-brand-navy">{{ f.total_respon }} / {{ f.kuota }} Orang</span>
+                  </div>
+                  <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                    <div class="bg-blue-600 h-full rounded-full transition-all duration-500" style="width: {% widthratio f.total_respon f.kuota 100 %}%;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-100 flex flex-wrap gap-2">
+              <button onclick="openEditFormBuilderModal({{ f.id }})" class="flex-1 py-2 px-2.5 bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1">
+                <i class="fa-solid fa-pen-to-square"></i> Edit Pertanyaan
+              </button>
+              <button onclick="openFormAnalyticsModal({{ f.id }})" class="flex-1 py-2 px-2.5 bg-brand-yellow hover:bg-brand-yellowHover text-brand-navy rounded-xl text-xs font-black transition flex items-center justify-center gap-1 shadow-sm">
+                <i class="fa-solid fa-chart-pie"></i> Grafik Respon
+              </button>
+              <button onclick="toggleFormulir({{ f.id }})" title="Ubah status buka/tutup" class="p-2 {% if f.is_active %}bg-amber-50 hover:bg-amber-100 text-amber-800{% else %}bg-emerald-50 hover:bg-emerald-100 text-emerald-800{% endif %} rounded-xl text-xs font-bold">
+                <i class="fa-solid {% if f.is_active %}fa-lock{% else %}fa-lock-open{% endif %}"></i>
+              </button>
+              <button onclick="deleteFormulir({{ f.id }})" title="Hapus formulir" class="p-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-bold">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+          </div>
+          {% empty %}
+          <div class="col-span-3 text-center py-12 text-slate-400 bg-white rounded-3xl border border-slate-200">
+            <i class="fa-solid fa-clipboard-question text-4xl text-slate-300 mb-2"></i>
+            <p class="font-bold">Belum ada formulir online.</p>
+            <p class="text-xs text-slate-400 mt-1">Klik tombol "Buat Formulir Baru" untuk membuat formulir & pertanyaan dinamis seperti Google Forms.</p>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Tabel Respon Pendaftar Terbaru -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <div class="font-black text-sm text-brand-navy">Daftar Respon Pendaftar Masuk</div>
+              <p class="text-xs text-slate-400">Total: {{ respon_list.count }} respon dari seluruh formulir aktif</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="text" id="search-respon-table" onkeyup="filterResponTable()" placeholder="Cari nama / NIM..." class="px-3 py-1.5 border border-slate-200 rounded-xl text-xs">
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700" id="table-respon-admin">
+              <thead class="bg-slate-50 font-bold uppercase text-slate-400 border-b border-slate-200">
+                <tr>
+                  <th class="py-3 px-4">Tanggal</th>
+                  <th class="py-3 px-4">Nama Lengkap</th>
+                  <th class="py-3 px-4">NIM</th>
+                  <th class="py-3 px-4">Formulir</th>
+                  <th class="py-3 px-4">WhatsApp / Email</th>
+                  <th class="py-3 px-4 text-center">Jawaban Responden</th>
+                  <th class="py-3 px-4">Berkas</th>
+                  <th class="py-3 px-4 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                {% for r in respon_list %}
+                <tr class="hover:bg-slate-50 transition respon-row" data-search="{{ r.nama_lengkap|lower }} {{ r.nim }} {{ r.formulir.judul|lower }}">
+                  <td class="py-3 px-4 text-slate-400">{{ r.created_at|date:"d/m/Y H:i" }}</td>
+                  <td class="py-3 px-4 font-bold text-brand-navy">{{ r.nama_lengkap }}</td>
+                  <td class="py-3 px-4 font-mono">{{ r.nim }}</td>
+                  <td class="py-3 px-4 font-semibold text-blue-700">{{ r.formulir.judul }}</td>
+                  <td class="py-3 px-4">{{ r.no_whatsapp }}<br><span class="text-[10px] text-slate-400">{{ r.email }}</span></td>
+                  <td class="py-3 px-4 text-center">
+                    <button onclick="previewJawabanResponden({{ r.id }}, '{{ r.nama_lengkap|escapejs }}', '{{ r.formulir.judul|escapejs }}')" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold text-[11px] rounded-lg border border-blue-200">
+                      <i class="fa-solid fa-eye"></i> Lihat Jawaban
+                    </button>
+                    <!-- Hidden storage of JSON answers for modal -->
+                    <script type="application/json" id="data-jawaban-{{ r.id }}">{{ r.jawaban|default:"{}"|safe }}</script>
+                  </td>
+                  <td class="py-3 px-4">
+                    {% if r.berkas_lampiran or r.berkas_lampiran_url %}
+                    <a href="{{ r.get_berkas }}" target="_blank" class="text-brand-navy font-bold hover:underline flex items-center gap-1 text-[11px]">
+                      <i class="fa-solid fa-file-arrow-down text-emerald-600"></i> Berkas
+                    </a>
+                    {% else %}
+                    <span class="text-slate-400 text-[10px]">-</span>
+                    {% endif %}
+                  </td>
+                  <td class="py-3 px-4 text-center">
+                    <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">{{ r.status }}</span>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="text-center py-6 text-slate-400">Belum ada respon pendaftar masuk.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- MODAL: GOOGLE FORM BUILDER (EDITABLE PERTANYAAN FORMULIR) -->
+  <div id="modal-form-builder" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl relative max-h-[92vh] flex flex-col">
+      <button onclick="closeFormBuilderModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      
+      <div class="flex items-center gap-2 mb-2">
+        <span class="bg-blue-100 text-blue-900 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase flex items-center gap-1">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Google Form Builder
+        </span>
+        <span id="fb-badge-mode" class="bg-amber-100 text-amber-900 text-[10px] font-black px-2 py-0.5 rounded-full">Buat Baru</span>
+      </div>
+      <h3 id="fb-modal-title" class="text-xl font-black text-brand-navy">Desain Formulir & Atur Pertanyaan</h3>
+      <p class="text-xs text-slate-400 mt-0.5">Tambah atau edit pertanyaan bebas seperti Google Forms. Responden akan mengisi pertanyaan ini di web publik.</p>
+
+      <form onsubmit="handleFormBuilderSubmit(event)" class="mt-4 flex-1 overflow-y-auto space-y-4 pr-1 text-xs">
+        <input type="hidden" id="fb-form-id" value="">
+        
+        <!-- Informasi Dasar Formulir -->
+        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+          <div class="font-bold text-xs text-brand-navy flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-info text-blue-600"></i> Informasi Umum Formulir
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Judul Formulir <span class="text-rose-500">*</span></label>
+            <input type="text" id="fb-judul" required placeholder="Contoh: Pendaftaran Workshop Coretax & Brevet Terpadu" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:border-brand-navy">
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block font-bold text-slate-700">Kategori</label>
+                <button type="button" onclick="openManageKategoriFormModal()" class="text-[10px] text-purple-700 hover:underline font-bold">+ Kategori</button>
+              </div>
+              <select id="fb-kategori" class="w-full px-3 py-2 border border-slate-200 rounded-xl">
+                {% for k in kategori_form_list %}
+                <option value="{{ k.nama }}">{{ k.nama }}</option>
+                {% empty %}
+                <option value="Pelatihan Brevet">Pelatihan Brevet</option>
+                <option value="Relawan Pajak">Relawan Pajak</option>
+                <option value="Seminar / Webinar">Seminar / Webinar</option>
+                <option value="Rekrutmen Anggota">Rekrutmen Anggota</option>
+                <option value="Survei & Riset">Survei & Riset</option>
+                <option value="Lainnya">Lainnya</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Batas Waktu</label>
+              <input type="date" id="fb-deadline" class="w-full px-3 py-2 border border-slate-200 rounded-xl">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Target Kuota Responden</label>
+              <input type="number" id="fb-kuota" value="100" min="1" class="w-full px-3 py-2 border border-slate-200 rounded-xl">
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Petunjuk / Deskripsi Pengisian</label>
+            <textarea id="fb-deskripsi" rows="2" placeholder="Jelaskan tujuan, syarat peserta, dan petunjuk formulir..." class="w-full px-3 py-2 border border-slate-200 rounded-xl"></textarea>
+          </div>
+        </div>
+
+        <!-- Google Form Dynamic Question Builder -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="font-black text-sm text-brand-navy flex items-center gap-1.5">
+                <i class="fa-solid fa-circle-question text-blue-600"></i> Daftar Pertanyaan Formulir
+              </h4>
+              <p class="text-[11px] text-slate-400">Atur berapa saja pertanyaan yang ingin Anda tanyakan ke mahasiswa.</p>
+            </div>
+            <button type="button" onclick="addQuestionItem()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5">
+              <i class="fa-solid fa-plus"></i> Tambah Pertanyaan
+            </button>
+          </div>
+
+          <!-- Question Cards Container -->
+          <div id="fb-questions-list" class="space-y-3 min-h-[100px]">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2 sticky bottom-0 bg-white">
+          <button type="button" onclick="closeFormBuilderModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition">
+            Batal
+          </button>
+          <button type="submit" id="btn-save-form" class="px-6 py-2 bg-brand-navy hover:bg-brand-navyLight text-white font-black rounded-xl transition flex items-center gap-2 shadow">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Simpan Formulir & Pertanyaan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+
+  <!-- MODAL: ANALISIS GRAFIK RESPON GOOGLE FORM -->
+  <div id="modal-form-analytics" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-4xl w-full p-6 shadow-2xl relative max-h-[92vh] flex flex-col">
+      <button onclick="closeFormAnalyticsModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="flex items-center gap-2 mb-1">
+        <span class="bg-amber-100 text-amber-900 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase flex items-center gap-1">
+          <i class="fa-solid fa-chart-pie"></i> Google Form Responses Analytics
+        </span>
+        <span id="fa-badge-kategori" class="bg-blue-50 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full">Kategori</span>
+      </div>
+      <h3 id="fa-judul" class="text-xl font-black text-brand-navy">Analisis Respon Formulir</h3>
+      <p id="fa-deskripsi" class="text-xs text-slate-500 mt-0.5">Grafik statistik dan ringkasan seluruh responden yang telah mengisi form.</p>
+
+      <!-- KPI Summary Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4">
+        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200">
+          <div class="text-[10px] font-bold text-slate-400 uppercase">Total Responden</div>
+          <div id="fa-total-respon" class="text-2xl font-black text-brand-navy mt-0.5">0</div>
+        </div>
+        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200">
+          <div class="text-[10px] font-bold text-slate-400 uppercase">Target Kuota</div>
+          <div id="fa-kuota" class="text-2xl font-black text-slate-700 mt-0.5">0</div>
+        </div>
+        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200">
+          <div class="text-[10px] font-bold text-slate-400 uppercase">Persentase Terisi</div>
+          <div id="fa-persen" class="text-2xl font-black text-emerald-600 mt-0.5">0%</div>
+        </div>
+        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200">
+          <div class="text-[10px] font-bold text-slate-400 uppercase">Jumlah Pertanyaan</div>
+          <div id="fa-total-pertanyaan" class="text-2xl font-black text-blue-700 mt-0.5">0</div>
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-y-auto space-y-6 pr-1">
+        <!-- Dynamic Charts Grid: Each question gets its own chart card -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="font-black text-sm text-brand-navy flex items-center gap-1.5">
+              <i class="fa-solid fa-chart-column text-amber-500"></i> Visualisasi Grafik Jawaban Pertanyaan
+            </h4>
+            <span class="text-[11px] text-slate-400">Diagram otomatis berdasarkan pilihan & rating responden</span>
+          </div>
+
+          <div id="fa-charts-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Dynamically populated charts per question -->
+          </div>
+        </div>
+
+        <!-- Tabel Daftar Responden untuk Form Ini -->
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+          <div class="p-3.5 bg-slate-50 border-b border-slate-200 font-black text-xs text-brand-navy flex items-center justify-between">
+            <span>Daftar Responden Masuk Form Ini</span>
+            <span id="fa-table-count" class="text-[10px] font-mono text-slate-400">0 Data</span>
+          </div>
+          <div class="overflow-x-auto max-h-60">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-100 font-bold uppercase text-[10px] text-slate-500 sticky top-0">
+                <tr>
+                  <th class="py-2.5 px-3">Tanggal</th>
+                  <th class="py-2.5 px-3">Nama</th>
+                  <th class="py-2.5 px-3">NIM</th>
+                  <th class="py-2.5 px-3">WhatsApp</th>
+                  <th class="py-2.5 px-3 text-center">Jawaban Lengkap</th>
+                </tr>
+              </thead>
+              <tbody id="fa-responses-tbody" class="divide-y divide-slate-100 text-[11px]">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-200 flex justify-end gap-2 sticky bottom-0 bg-white">
+        <button onclick="closeFormAnalyticsModal()" class="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition">
+          Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- MODAL: KELOLA KATEGORI GFORM CRUD -->
+  <div id="modal-manage-kategori-form" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl relative max-h-[90vh] flex flex-col">
+      <button onclick="closeManageKategoriFormModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="flex items-center gap-2 mb-1">
+        <span class="bg-purple-100 text-purple-900 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase flex items-center gap-1">
+          <i class="fa-solid fa-tags"></i> Kategori Gform
+        </span>
+      </div>
+      <h3 class="text-lg font-black text-brand-navy">Kelola Kategori Formulir Online</h3>
+      <p class="text-xs text-slate-400">Tambah, ubah, atau hapus kategori untuk formulir pendaftaran.</p>
+
+      <!-- Form Tambah / Edit Kategori -->
+      <form onsubmit="handleSaveKategoriForm(event)" class="mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3 text-xs">
+        <input type="hidden" id="kat-form-id" value="">
+        <div class="flex items-center justify-between">
+          <span id="kat-form-mode-title" class="font-bold text-brand-navy flex items-center gap-1.5">
+            <i class="fa-solid fa-plus-circle text-purple-600"></i> Tambah Kategori Baru
+          </span>
+          <button type="button" id="btn-cancel-edit-kat" onclick="resetKategoriForm()" class="text-[11px] text-slate-500 hover:text-slate-700 hidden">
+            <i class="fa-solid fa-rotate-left"></i> Batal Edit
+          </button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div class="sm:col-span-2">
+            <label class="block font-bold text-slate-700 mb-1">Nama Kategori <span class="text-rose-500">*</span></label>
+            <input type="text" id="kat-form-nama" required placeholder="Contoh: Pelatihan Brevet" class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-purple-600">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Urutan</label>
+            <input type="number" id="kat-form-urutan" value="0" min="0" class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-purple-600 font-mono">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Deskripsi Singkat (Opsional)</label>
+          <input type="text" id="kat-form-deskripsi" placeholder="Keterangan tujuan kategori..." class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-purple-600">
+        </div>
+        <div class="flex justify-end gap-2 pt-1">
+          <button type="submit" id="btn-save-kat-form" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-xs transition flex items-center gap-1.5">
+            <i class="fa-solid fa-check"></i> Simpan Kategori
+          </button>
+        </div>
+      </form>
+
+      <!-- Daftar Kategori Tabel -->
+      <div class="mt-4 flex-1 overflow-y-auto border border-slate-100 rounded-2xl">
+        <table class="w-full text-left text-xs text-slate-700">
+          <thead class="bg-slate-50 text-slate-400 font-bold uppercase text-[10px] border-b border-slate-100 sticky top-0">
+            <tr>
+              <th class="py-2.5 px-3">Nama Kategori</th>
+              <th class="py-2.5 px-3">Deskripsi</th>
+              <th class="py-2.5 px-3 text-center">Urutan</th>
+              <th class="py-2.5 px-3 text-center">Total Form</th>
+              <th class="py-2.5 px-3 text-center">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="kategori-form-table-body" class="divide-y divide-slate-100">
+            {% for k in kategori_form_list %}
+            <tr id="kat-row-{{ k.id }}" class="hover:bg-slate-50">
+              <td class="py-2.5 px-3 font-bold text-brand-navy">{{ k.nama }}</td>
+              <td class="py-2.5 px-3 text-slate-500 max-w-xs truncate">{{ k.deskripsi|default:"-" }}</td>
+              <td class="py-2.5 px-3 text-center font-mono text-slate-400">{{ k.urutan }}</td>
+              <td class="py-2.5 px-3 text-center font-mono font-bold text-purple-700">{{ k.formulir_set.count|default:0 }}</td>
+              <td class="py-2.5 px-3 text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                  <button type="button" onclick="editKategoriForm({{ k.id }})" class="p-1 text-blue-600 hover:bg-blue-50 rounded" title="Edit">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                  <button type="button" onclick="deleteKategoriForm({{ k.id }})" class="p-1 text-rose-600 hover:bg-rose-50 rounded" title="Hapus">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="py-4 text-center text-slate-400">Belum ada kategori formulir.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- MODAL: PREVIEW JAWABAN LENGKAP RESPONDEN (GOOGLE FORM RESPONSE SHEET) -->
+  <div id="modal-detail-jawaban" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] flex flex-col text-xs">
+      <button onclick="closeDetailJawabanModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <span class="bg-blue-100 text-blue-900 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase w-max mb-1">
+        <i class="fa-solid fa-file-lines"></i> Lembar Respon Google Form
+      </span>
+      <h3 id="dj-nama" class="text-lg font-black text-brand-navy">Nama Responden</h3>
+      <p id="dj-form" class="text-xs text-slate-400 font-semibold">Formulir</p>
+
+      <div class="mt-4 flex-1 overflow-y-auto space-y-3 pr-1" id="dj-container">
+        <!-- Rendered by JS -->
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 flex justify-end">
+        <button onclick="closeDetailJawabanModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl">
+          Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+{% endblock %}

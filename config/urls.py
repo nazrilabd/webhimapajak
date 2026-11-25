@@ -1,22 +1,129 @@
-"""
-URL configuration for config project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path
+from core.views import (
+    home_view, profil_view, struktur_view, anggota_view, arsip_view,
+    proker_view, anggaran_view, berita_view, galeri_view, formulir_view,
+    aspirasi_view, kontak_view,
+    berita_detail_view, admin_dashboard_view,
+    admin_anggaran_view, admin_formulir_view, admin_aspirasi_view,
+    admin_anggota_view, admin_struktur_view, admin_arsip_view,
+    admin_proker_view, admin_berita_view, admin_galeri_view,
+    admin_profil_view, admin_users_view, admin_audit_log_view,
+    login_view, logout_view,
+    api_submit_aspirasi, api_submit_kontak, api_submit_formulir,
+    api_cek_sertifikat, api_submit_presensi,
+    admin_tambah_transaksi, admin_hapus_transaksi,
+    admin_tambah_anggota, admin_hapus_anggota, admin_edit_anggota,
+    admin_tambah_struktur, admin_edit_struktur, admin_hapus_struktur,
+    admin_list_divisi_struktur, admin_tambah_divisi_struktur, admin_edit_divisi_struktur, admin_hapus_divisi_struktur,
+    admin_tambah_arsip, admin_edit_arsip, admin_hapus_arsip,
+    admin_tambah_formulir, admin_edit_formulir, admin_toggle_formulir, admin_hapus_formulir,
+    admin_get_form_detail,
+    admin_list_kategori_form, admin_tambah_kategori_form, admin_edit_kategori_form, admin_hapus_kategori_form,
+    admin_update_aspirasi, admin_hapus_aspirasi,
+    admin_get_aspirasi_config, admin_simpan_aspirasi_config, admin_get_aspirasi_analytics,
+    admin_tambah_proker, admin_edit_proker, admin_hapus_proker,
+    admin_tambah_berita, admin_hapus_berita, admin_edit_berita,
+    admin_tambah_galeri, admin_hapus_galeri, admin_edit_galeri,
+    admin_update_profil,
+    admin_tambah_user, admin_hapus_user,
+    admin_tambah_sertifikat, admin_hapus_sertifikat,
+    admin_hapus_presensi,
+    download_lpj_view
+)
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('django-admin/', admin.site.urls),
+
+    # Main views & Public portal pages
+    path('', home_view, name='home'),
+    path('index.html', home_view, name='home_html'),
+    path('profil/', profil_view, name='profil'),
+    path('struktur/', struktur_view, name='struktur'),
+    path('mahasiswa/', anggota_view, name='anggota'),
+    path('anggota/', anggota_view, name='anggota_alias'),
+    path('arsip/', arsip_view, name='arsip'),
+    path('proker/', proker_view, name='proker'),
+    path('transparansi-kas/', anggaran_view, name='anggaran'),
+    path('anggaran/', anggaran_view, name='anggaran_alias'),
+    path('berita/', berita_view, name='berita'),
+    path('galeri/', galeri_view, name='galeri'),
+    path('formulir/', formulir_view, name='formulir'),
+    path('aspirasi/', aspirasi_view, name='aspirasi'),
+    path('kontak/', kontak_view, name='kontak'),
+    path('berita/<slug:slug>/', berita_detail_view, name='berita_detail'),
+    path('berita/id/<int:pk>/', berita_detail_view, name='berita_detail_by_id'),
+    path('admin-dashboard/', admin_dashboard_view, name='admin_dashboard'),
+    path('admin-dashboard/anggaran/', admin_anggaran_view, name='admin_anggaran'),
+    path('admin-dashboard/formulir/', admin_formulir_view, name='admin_formulir'),
+    path('admin-dashboard/aspirasi/', admin_aspirasi_view, name='admin_aspirasi'),
+    path('admin-dashboard/anggota/', admin_anggota_view, name='admin_anggota'),
+    path('admin-dashboard/struktur/', admin_struktur_view, name='admin_struktur'),
+    path('admin-dashboard/arsip/', admin_arsip_view, name='admin_arsip'),
+    path('admin-dashboard/proker/', admin_proker_view, name='admin_proker'),
+    path('admin-dashboard/berita/', admin_berita_view, name='admin_berita'),
+    path('admin-dashboard/galeri/', admin_galeri_view, name='admin_galeri'),
+    path('admin-dashboard/profil/', admin_profil_view, name='admin_profil'),
+    path('admin-dashboard/pengguna/', admin_users_view, name='admin_users'),
+    path('admin-dashboard/audit-log/', admin_audit_log_view, name='admin_audit_log'),
+    path('admin.html', admin_dashboard_view, name='admin_dashboard_html'),
+    path('login/', login_view, name='login'),
+    path('login.html', login_view, name='login_html'),
+    path('logout/', logout_view, name='logout'),
+
+    # Public submission endpoints
+    path('api/aspirasi/submit/', api_submit_aspirasi, name='api_submit_aspirasi'),
+    path('api/kontak/submit/', api_submit_kontak, name='api_submit_kontak'),
+    path('api/formulir/submit/', api_submit_formulir, name='api_submit_formulir'),
+    path('api/sertifikat/cek/', api_cek_sertifikat, name='api_cek_sertifikat'),
+    path('api/presensi/submit/', api_submit_presensi, name='api_submit_presensi'),
+
+    # Admin Management Actions (Cloudinary & Neon)
+    path('admin-api/kas/tambah/', admin_tambah_transaksi, name='admin_tambah_transaksi'),
+    path('admin-api/kas/hapus/<int:pk>/', admin_hapus_transaksi, name='admin_hapus_transaksi'),
+    path('admin-api/anggota/tambah/', admin_tambah_anggota, name='admin_tambah_anggota'),
+    path('admin-api/anggota/hapus/<int:pk>/', admin_hapus_anggota, name='admin_hapus_anggota'),
+    path('admin-api/anggota/edit/<int:pk>/', admin_edit_anggota, name='admin_edit_anggota'),
+    path('admin-api/struktur/tambah/', admin_tambah_struktur, name='admin_tambah_struktur'),
+    path('admin-api/struktur/edit/<int:pk>/', admin_edit_struktur, name='admin_edit_struktur'),
+    path('admin-api/struktur/hapus/<int:pk>/', admin_hapus_struktur, name='admin_hapus_struktur'),
+    path('admin-api/divisi-struktur/list/', admin_list_divisi_struktur, name='admin_list_divisi_struktur'),
+    path('admin-api/divisi-struktur/tambah/', admin_tambah_divisi_struktur, name='admin_tambah_divisi_struktur'),
+    path('admin-api/divisi-struktur/edit/<int:pk>/', admin_edit_divisi_struktur, name='admin_edit_divisi_struktur'),
+    path('admin-api/divisi-struktur/hapus/<int:pk>/', admin_hapus_divisi_struktur, name='admin_hapus_divisi_struktur'),
+    path('admin-api/arsip/tambah/', admin_tambah_arsip, name='admin_tambah_arsip'),
+    path('admin-api/arsip/edit/<int:pk>/', admin_edit_arsip, name='admin_edit_arsip'),
+    path('admin-api/arsip/hapus/<int:pk>/', admin_hapus_arsip, name='admin_hapus_arsip'),
+    path('admin-api/formulir/tambah/', admin_tambah_formulir, name='admin_tambah_formulir'),
+    path('admin-api/formulir/edit/<int:pk>/', admin_edit_formulir, name='admin_edit_formulir'),
+    path('admin-api/formulir/detail/<int:pk>/', admin_get_form_detail, name='admin_get_form_detail'),
+    path('admin-api/formulir/toggle/<int:pk>/', admin_toggle_formulir, name='admin_toggle_formulir'),
+    path('admin-api/formulir/hapus/<int:pk>/', admin_hapus_formulir, name='admin_hapus_formulir'),
+    path('admin-api/kategori-form/list/', admin_list_kategori_form, name='admin_list_kategori_form'),
+    path('admin-api/kategori-form/tambah/', admin_tambah_kategori_form, name='admin_tambah_kategori_form'),
+    path('admin-api/kategori-form/edit/<int:pk>/', admin_edit_kategori_form, name='admin_edit_kategori_form'),
+    path('admin-api/kategori-form/hapus/<int:pk>/', admin_hapus_kategori_form, name='admin_hapus_kategori_form'),
+    path('admin-api/aspirasi/config/', admin_get_aspirasi_config, name='admin_get_aspirasi_config'),
+    path('admin-api/aspirasi/config/simpan/', admin_simpan_aspirasi_config, name='admin_simpan_aspirasi_config'),
+    path('admin-api/aspirasi/analytics/', admin_get_aspirasi_analytics, name='admin_get_aspirasi_analytics'),
+    path('admin-api/aspirasi/update/<int:pk>/', admin_update_aspirasi, name='admin_update_aspirasi'),
+    path('admin-api/aspirasi/hapus/<int:pk>/', admin_hapus_aspirasi, name='admin_hapus_aspirasi'),
+    path('admin-api/proker/tambah/', admin_tambah_proker, name='admin_tambah_proker'),
+    path('admin-api/proker/edit/<int:pk>/', admin_edit_proker, name='admin_edit_proker'),
+    path('admin-api/proker/hapus/<int:pk>/', admin_hapus_proker, name='admin_hapus_proker'),
+    path('admin-api/berita/tambah/', admin_tambah_berita, name='admin_tambah_berita'),
+    path('admin-api/berita/edit/<int:pk>/', admin_edit_berita, name='admin_edit_berita'),
+    path('admin-api/berita/hapus/<int:pk>/', admin_hapus_berita, name='admin_hapus_berita'),
+    path('admin-api/galeri/tambah/', admin_tambah_galeri, name='admin_tambah_galeri'),
+    path('admin-api/galeri/edit/<int:pk>/', admin_edit_galeri, name='admin_edit_galeri'),
+    path('admin-api/galeri/hapus/<int:pk>/', admin_hapus_galeri, name='admin_hapus_galeri'),
+    path('admin-api/profil/update/', admin_update_profil, name='admin_update_profil'),
+    path('admin-api/user/tambah/', admin_tambah_user, name='admin_tambah_user'),
+    path('admin-api/user/hapus/<int:pk>/', admin_hapus_user, name='admin_hapus_user'),
+    path('admin-api/sertifikat/tambah/', admin_tambah_sertifikat, name='admin_tambah_sertifikat'),
+    path('admin-api/sertifikat/hapus/<int:pk>/', admin_hapus_sertifikat, name='admin_hapus_sertifikat'),
+    path('admin-api/presensi/hapus/<int:pk>/', admin_hapus_presensi, name='admin_hapus_presensi'),
+
+    # LPJ report
+    path('laporan/lpj-keuangan/', download_lpj_view, name='download_lpj'),
 ]

@@ -1,0 +1,254 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Arsip Periode Kepengurusan (2023-2027) - HIMA PERPAJAKAN UIMANDIRI{% endblock %}
+
+{% block page_heading %}Arsip Periode Kepengurusan (2023-2027){% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-black text-brand-navy">Arsip Periode Kepengurusan</h2>
+            <p class="text-xs text-slate-400">Kelola riwayat periode kabinet, surat keputusan rektor, pimpinan, dan relasi pengurus struktural.</p>
+          </div>
+          <button onclick="openAddArsipModal()" class="inline-flex items-center gap-2 bg-brand-yellow hover:bg-brand-yellowHover text-brand-navy font-black text-xs px-4 py-2.5 rounded-xl shadow transition">
+            <i class="fa-solid fa-plus"></i> Tambah Periode Baru
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {% for ar in arsip_list %}
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3 relative hover:shadow-md transition" id="arsip-card-{{ ar.id }}">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-black text-brand-navy">{{ ar.tahun_periode }}</span>
+                {% if ar.aktif %}
+                <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                  <i class="fa-solid fa-circle-check"></i> Aktif Berjalan
+                </span>
+                {% else %}
+                <span class="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  Arsip Riwayat
+                </span>
+                {% endif %}
+              </div>
+              <span class="text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200/60 px-2 py-0.5 rounded-lg inline-flex items-center gap-1">
+                <i class="fa-solid fa-users"></i> {{ ar.pengurus_list.count }} Pengurus
+              </span>
+            </div>
+
+            <div>
+              <h4 class="font-extrabold text-base text-brand-navy">{{ ar.nama_kabinet }}</h4>
+              {% if ar.masa_bakti %}
+              <p class="text-xs text-slate-500 font-medium">Masa Bakti: {{ ar.masa_bakti }}</p>
+              {% endif %}
+            </div>
+
+            <div class="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl space-y-1">
+              <div><strong>Ketua:</strong> {{ ar.nama_ketua }}{% if ar.nim_ketua %} ({{ ar.nim_ketua }}){% endif %}</div>
+              <div><strong>Wakil:</strong> {{ ar.nama_wakil|default:"-" }}{% if ar.nim_wakil %} ({{ ar.nim_wakil }}){% endif %}</div>
+              <div><strong>Sekretaris:</strong> {{ ar.nama_sekretaris|default:"-" }} &bull; <strong>Bendahara:</strong> {{ ar.nama_bendahara|default:"-" }}</div>
+            </div>
+
+            {% if ar.deskripsi %}
+            <p class="text-xs text-slate-500 italic line-clamp-2">"{{ ar.deskripsi }}"</p>
+            {% endif %}
+
+            {% if ar.sk_rektor %}
+            <div class="text-[10px] text-slate-400 font-mono flex items-center gap-1">
+              <i class="fa-solid fa-certificate text-brand-yellow"></i> SK Rektor: {{ ar.sk_rektor }}
+            </div>
+            {% endif %}
+
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+              <button onclick="switchTab('struktur'); document.getElementById('filter-str-periode').value='{{ ar.id }}'; filterStrukturByPeriod('{{ ar.id }}')" class="text-xs font-bold text-brand-navy hover:text-amber-600 flex items-center gap-1">
+                <i class="fa-solid fa-sitemap"></i> Lihat Anggota Struktur &rarr;
+              </button>
+              <div class="flex items-center gap-2">
+                <button onclick="openEditArsipModal({{ ar.id }}, '{{ ar.tahun_periode|escapejs }}', '{{ ar.nama_kabinet|escapejs }}', '{{ ar.masa_bakti|escapejs }}', '{{ ar.sk_rektor|escapejs }}', '{{ ar.nama_ketua|escapejs }}', '{{ ar.nim_ketua|escapejs }}', '{{ ar.nama_wakil|escapejs }}', '{{ ar.nim_wakil|escapejs }}', '{{ ar.nama_sekretaris|escapejs }}', '{{ ar.nama_bendahara|escapejs }}', '{{ ar.deskripsi|escapejs }}', {{ ar.aktif|yesno:'true,false' }}, {{ ar.order_index }})" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg text-xs font-bold transition" title="Edit Arsip Periode">
+                  <i class="fa-solid fa-pen-to-square"></i> Edit
+                </button>
+                <button onclick="deleteArsip({{ ar.id }})" class="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg text-xs font-bold transition" title="Hapus Arsip Periode">
+                  <i class="fa-solid fa-trash-can"></i> Hapus
+                </button>
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="col-span-2 text-center py-8 text-slate-400 bg-white rounded-2xl border border-slate-200">
+            Belum ada arsip periode kepengurusan.
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- ==================== TAB 8: PROGRAM KERJA ==================== -->
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- MODAL: ADD ARSIP PERIODE -->
+  <div id="modal-add-arsip" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeAddArsipModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl"><i class="fa-solid fa-xmark"></i></button>
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-50 text-brand-navy flex items-center justify-center text-lg font-black">
+          <i class="fa-solid fa-folder-plus"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-black text-brand-navy">Tambah Arsip Periode Kepengurusan</h3>
+          <p class="text-xs text-slate-400">Rekam jejak periode kepengurusan baru atau riwayat lampau.</p>
+        </div>
+      </div>
+
+      <form onsubmit="handleAddArsipSubmit(event)" class="mt-4 space-y-3 text-xs">
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Tahun Periode</label>
+            <input type="text" id="arsip-add-tahun" required placeholder="Contoh: 2027/2028" class="w-full px-3 py-2 border rounded-lg font-mono">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Nama Kabinet</label>
+            <input type="text" id="arsip-add-kabinet" required placeholder="Contoh: Kabinet Revolusi Fiskal" class="w-full px-3 py-2 border rounded-lg">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Masa Bakti</label>
+            <input type="text" id="arsip-add-masa" placeholder="01 September 2027 s.d. 31 Agustus 2028" class="w-full px-3 py-2 border rounded-lg">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Nomor SK Rektor</label>
+            <input type="text" id="arsip-add-sk" placeholder="SK Rektor No. 600/SK/UIM/2027" class="w-full px-3 py-2 border rounded-lg font-mono">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Nama Ketua Umum</label>
+            <input type="text" id="arsip-add-ketua" required class="w-full px-3 py-2 border rounded-lg">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">NIM Ketua</label>
+            <input type="text" id="arsip-add-nim-ketua" class="w-full px-3 py-2 border rounded-lg font-mono">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Nama Wakil Ketua</label>
+            <input type="text" id="arsip-add-wakil" class="w-full px-3 py-2 border rounded-lg">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">NIM Wakil</label>
+            <input type="text" id="arsip-add-nim-wakil" class="w-full px-3 py-2 border rounded-lg font-mono">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Nama Sekretaris</label>
+            <input type="text" id="arsip-add-sekretaris" class="w-full px-3 py-2 border rounded-lg">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Nama Bendahara</label>
+            <input type="text" id="arsip-add-bendahara" class="w-full px-3 py-2 border rounded-lg">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Deskripsi / Visi Kabinet</label>
+          <textarea id="arsip-add-deskripsi" rows="2" placeholder="Visi misi atau fokus program kabinet..." class="w-full px-3 py-2 border rounded-lg"></textarea>
+        </div>
+        <div class="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+          <input type="checkbox" id="arsip-add-aktif" class="w-4 h-4 text-emerald-600 rounded">
+          <label for="arsip-add-aktif" class="font-bold text-slate-700 cursor-pointer">Setel sebagai Periode Aktif Berjalan Sekarang</label>
+        </div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeAddArsipModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg font-semibold">Batal</button>
+          <button type="submit" id="btn-save-arsip" class="px-5 py-2 bg-brand-yellow hover:bg-brand-yellowHover text-brand-navy font-black rounded-lg">Simpan Periode</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+
+  <!-- MODAL: EDIT ARSIP PERIODE -->
+  <div id="modal-edit-arsip" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeEditArsipModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl"><i class="fa-solid fa-xmark"></i></button>
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-50 text-brand-navy flex items-center justify-center text-lg font-black">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-black text-brand-navy">Edit Arsip Periode Kepengurusan</h3>
+          <p class="text-xs text-slate-400">Perbarui data kabinet dan pimpinan periode.</p>
+        </div>
+      </div>
+
+      <form onsubmit="handleEditArsipSubmit(event)" class="mt-4 space-y-3 text-xs">
+        <input type="hidden" id="arsip-edit-id">
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Tahun Periode</label>
+            <input type="text" id="arsip-edit-tahun" required class="w-full px-3 py-2 border rounded-lg font-mono">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Nama Kabinet</label>
+            <input type="text" id="arsip-edit-kabinet" required class="w-full px-3 py-2 border rounded-lg">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Masa Bakti</label>
+            <input type="text" id="arsip-edit-masa" class="w-full px-3 py-2 border rounded-lg">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Nomor SK Rektor</label>
+            <input type="text" id="arsip-edit-sk" class="w-full px-3 py-2 border rounded-lg font-mono">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Nama Ketua Umum</label>
+            <input type="text" id="arsip-edit-ketua" required class="w-full px-3 py-2 border rounded-lg">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">NIM Ketua</label>
+            <input type="text" id="arsip-edit-nim-ketua" class="w-full px-3 py-2 border rounded-lg font-mono">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Nama Wakil Ketua</label>
+            <input type="text" id="arsip-edit-wakil" class="w-full px-3 py-2 border rounded-lg">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">NIM Wakil</label>
+            <input type="text" id="arsip-edit-nim-wakil" class="w-full px-3 py-2 border rounded-lg font-mono">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Nama Sekretaris</label>
+            <input type="text" id="arsip-edit-sekretaris" class="w-full px-3 py-2 border rounded-lg">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Nama Bendahara</label>
+            <input type="text" id="arsip-edit-bendahara" class="w-full px-3 py-2 border rounded-lg">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Deskripsi / Visi Kabinet</label>
+          <textarea id="arsip-edit-deskripsi" rows="2" class="w-full px-3 py-2 border rounded-lg"></textarea>
+        </div>
+        <div class="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+          <input type="checkbox" id="arsip-edit-aktif" class="w-4 h-4 text-emerald-600 rounded">
+          <label for="arsip-edit-aktif" class="font-bold text-slate-700 cursor-pointer">Setel sebagai Periode Aktif Berjalan Sekarang</label>
+        </div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeEditArsipModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg font-semibold">Batal</button>
+          <button type="submit" id="btn-update-arsip" class="px-5 py-2 bg-brand-navy hover:bg-brand-navyLight text-white font-black rounded-lg">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

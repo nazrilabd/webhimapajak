@@ -1,0 +1,150 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Berita & Pengumuman Perpajakan - HIMA PERPAJAKAN UIMANDIRI{% endblock %}
+
+{% block page_heading %}Berita & Pengumuman Perpajakan{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+<div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-black text-brand-navy">Kelola Berita & Pengumuman Perpajakan</h2>
+            <p class="text-xs text-slate-400">Publikasi artikel kebijakan fiskal, informasi beasiswa, dan upload gambar ke Cloudinary.</p>
+          </div>
+          <button onclick="openAddBeritaModal()" class="bg-brand-yellow hover:bg-brand-yellowHover text-brand-navy font-black text-xs px-4 py-2.5 rounded-xl shadow transition">
+            + Buat Artikel Berita
+          </button>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-3">
+          {% for b in berita_list %}
+          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl" id="berita-row-{{ b.id }}">
+            <div class="flex items-center gap-3">
+              <img src="{{ b.get_gambar }}" class="w-12 h-12 rounded-lg object-cover">
+              <div>
+                <h4 class="text-xs font-bold text-brand-navy">{{ b.judul }}</h4>
+                <p class="text-[10px] text-slate-400">{{ b.tanggal|date:"d M Y" }} &bull; Kategori: {{ b.kategori }} &bull; Penulis: {{ b.penulis }}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">Published</span>
+              <a href="{% if b.slug %}{% url 'berita_detail' b.slug %}{% else %}{% url 'berita_detail_by_id' b.id %}{% endif %}" target="_blank" class="text-xs text-slate-600 hover:text-brand-navy font-bold flex items-center gap-1 ml-2" title="Lihat di Portal Publik">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Lihat
+              </a>
+              <button onclick="openEditBeritaModal({{ b.id }})" class="text-xs text-brand-navy font-bold hover:underline flex items-center gap-1 ml-2">
+                <i class="fa-solid fa-pen-to-square"></i> Edit
+              </button>
+              <button onclick="deleteBerita({{ b.id }})" class="text-xs text-rose-600 font-bold hover:underline ml-2">
+                <i class="fa-solid fa-trash-can"></i> Hapus
+              </button>
+            </div>
+          </div>
+          {% empty %}
+          <div class="text-center py-4 text-slate-400 text-xs">Belum ada artikel berita.</div>
+          {% endfor %}
+        </div>
+
+      </div>
+
+      <!-- ==================== TAB 10: GALERI DOKUMENTASI ==================== -->
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- MODAL: ADD BERITA -->
+  <div id="modal-add-berita" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
+      <button onclick="closeAddBeritaModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl"><i class="fa-solid fa-xmark"></i></button>
+      <h3 class="text-base font-black text-brand-navy">Tulis Berita / Pengumuman</h3>
+      <form onsubmit="handleAddBeritaSubmit(event)" enctype="multipart/form-data" class="mt-4 space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Judul Artikel</label>
+          <input type="text" id="brt-judul" required class="w-full px-3 py-2 border rounded-lg">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Kategori</label>
+          <select id="brt-kategori" class="w-full px-3 py-2 border rounded-lg">
+            <option>Perpajakan</option>
+            <option>Kegiatan HIMA</option>
+            <option>Tax Center</option>
+            <option>Pengumuman</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Ringkasan Berita</label>
+          <textarea id="brt-ringkasan" rows="2" required class="w-full px-3 py-2 border rounded-lg"></textarea>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Isi Berita Lengkap</label>
+          <textarea id="brt-isi" rows="4" required class="w-full px-3 py-2 border rounded-lg"></textarea>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Gambar Sampul (Upload Cloudinary)</label>
+          <input type="file" id="brt-gambar" accept="image/*" class="w-full text-slate-500 text-[11px]">
+        </div>
+        <button type="submit" id="btn-save-berita" class="w-full py-2 bg-brand-navy text-white font-bold rounded-lg mt-2">Publikasikan Berita</button>
+      </form>
+    </div>
+  </div>
+
+
+
+  <!-- MODAL: EDIT BERITA -->
+  <div id="modal-edit-berita" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeEditBeritaModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl"><i class="fa-solid fa-xmark"></i></button>
+      <div class="flex items-center gap-2 mb-1">
+        <span class="w-2.5 h-2.5 rounded-full bg-brand-yellow"></span>
+        <h3 class="text-base font-black text-brand-navy">Edit Berita & Pengumuman</h3>
+      </div>
+      <p class="text-slate-400 text-[11px] mb-3">Perbarui konten artikel berita yang sudah dipublikasikan.</p>
+      
+      <form onsubmit="handleEditBeritaSubmit(event)" enctype="multipart/form-data" class="space-y-3 text-xs">
+        <input type="hidden" id="edit-brt-id">
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Judul Artikel</label>
+          <input type="text" id="edit-brt-judul" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-brand-navy">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Kategori</label>
+            <select id="edit-brt-kategori" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-brand-navy">
+              <option>Perpajakan</option>
+              <option>Kegiatan HIMA</option>
+              <option>Tax Center</option>
+              <option>Pengumuman</option>
+              <option>Prestasi</option>
+              <option>Regulasi</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Tanggal Publikasi</label>
+            <input type="date" id="edit-brt-tanggal" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-brand-navy">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Penulis</label>
+          <input type="text" id="edit-brt-penulis" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-brand-navy">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Ringkasan Berita</label>
+          <textarea id="edit-brt-ringkasan" rows="2" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-brand-navy"></textarea>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Isi Berita Lengkap</label>
+          <textarea id="edit-brt-isi" rows="4" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-brand-navy"></textarea>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Gambar Sampul Saat Ini</label>
+          <img id="edit-brt-gambar-preview" src="" class="w-full h-28 object-cover rounded-xl mb-2 border border-slate-200">
+          <label class="block font-bold text-slate-600 mb-1">Ganti Gambar Sampul (Opsional)</label>
+          <input type="file" id="edit-brt-gambar" accept="image/*" class="w-full text-slate-500 text-[11px]">
+        </div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeEditBeritaModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-semibold">Batal</button>
+          <button type="submit" id="btn-update-berita" class="px-5 py-2 bg-brand-navy hover:bg-brand-navyLight text-white font-bold rounded-xl shadow">Simpan Perubahan Berita</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Manajemen Akun Pengelola & Hak Akses - HIMA PERPAJAKAN UIMANDIRI{% endblock %}
+
+{% block page_heading %}Manajemen Akun Pengelola & Hak Akses{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+<div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-black text-brand-navy">Manajemen Akun Pengelola & Hak Akses</h2>
+            <p class="text-xs text-slate-400">Pembagian izin akses berdasarkan jabatan pengurus (Ketua, Sekretaris, Bendahara, Staff).</p>
+          </div>
+          <button onclick="openAddUserModal()" class="bg-brand-navy hover:bg-brand-navyLight text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition">
+            + Tambah Akun Pengurus
+          </button>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <table class="w-full text-left text-xs text-slate-700">
+            <thead class="bg-slate-50 font-bold uppercase text-slate-400 border-b border-slate-200">
+              <tr>
+                <th class="py-3 px-4">Nama Pengurus</th>
+                <th class="py-3 px-4">Username / Email</th>
+                <th class="py-3 px-4">Peran (Role)</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4 text-center">Kelola</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              {% for u in admin_users_list %}
+              <tr id="user-row-{{ u.id }}">
+                <td class="py-3 px-4 font-bold text-brand-navy">{{ u.first_name|default:u.username }}</td>
+                <td class="py-3 px-4 font-mono">{{ u.username }} ({{ u.email }})</td>
+                <td class="py-3 px-4">
+                  {% if u.is_superuser %}
+                  <span class="bg-purple-100 text-purple-900 font-bold px-2 py-0.5 rounded">Super Admin</span>
+                  {% else %}
+                  <span class="bg-blue-100 text-blue-900 font-bold px-2 py-0.5 rounded">Staff Pengurus</span>
+                  {% endif %}
+                </td>
+                <td class="py-3 px-4"><span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">Aktif</span></td>
+                <td class="py-3 px-4 text-center">
+                  {% if u.id != request.user.id %}
+                  <button onclick="deleteUser({{ u.id }})" class="text-rose-600 hover:text-rose-800 font-bold"><i class="fa-solid fa-trash-can"></i></button>
+                  {% else %}
+                  <span class="text-slate-400 text-[10px]">Sedang Login</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <!-- ==================== TAB 14: RIWAYAT AKTIVITAS / AUDIT LOG ==================== -->
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- MODAL: ADD USER ADMIN -->
+  <div id="modal-add-user" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
+      <button onclick="closeAddUserModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl"><i class="fa-solid fa-xmark"></i></button>
+      <h3 class="text-base font-black text-brand-navy">Tambah Akun Pengelola Admin</h3>
+      <form onsubmit="handleAddUserSubmit(event)" class="mt-4 space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Nama Lengkap</label>
+          <input type="text" id="usr-nama" required class="w-full px-3 py-2 border rounded-lg">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Username Login</label>
+          <input type="text" id="usr-username" required class="w-full px-3 py-2 border rounded-lg">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Email</label>
+          <input type="email" id="usr-email" required class="w-full px-3 py-2 border rounded-lg">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Kata Sandi (Password)</label>
+          <input type="password" id="usr-pass" required class="w-full px-3 py-2 border rounded-lg">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Peran Akses</label>
+          <select id="usr-role" class="w-full px-3 py-2 border rounded-lg">
+            <option value="Staff Pengurus">Staff Pengurus</option>
+            <option value="Super Admin">Super Administrator</option>
+          </select>
+        </div>
+        <button type="submit" id="btn-save-user" class="w-full py-2 bg-brand-navy text-white font-bold rounded-lg mt-2">Buat Akun Admin</button>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- TOAST NOTIFICATION BOX -->
+{% endblock %}

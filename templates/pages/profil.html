@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}Profil & Visi Misi - {{ profile.nama_organisasi|default:"HIMA PERPAJAKAN UIMANDIRI" }}{% endblock %}
+
+{% block content %}
+<div class="bg-brand-navy text-white py-14">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-xs text-brand-yellow uppercase tracking-widest font-bold">Tentang Organisasi</div>
+    <h1 class="text-3xl sm:text-4xl font-black mt-1">Profil {{ profile.nama_organisasi|default:"HIMA Perpajakan UIMANDIRI" }}</h1>
+    <p class="text-slate-300 text-sm mt-2 max-w-2xl">Mengenal sejarah berdirinya organisasi, visi, misi, dan peran strategis Tax Center di Universitas Insan Mandiri.</p>
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 space-y-12">
+  
+  <!-- Sejarah Organisasi -->
+  <div class="bg-white p-8 sm:p-10 rounded-3xl shadow-sm border border-slate-200">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-12 h-12 rounded-2xl bg-amber-50 text-brand-navy flex items-center justify-center font-bold text-xl border border-brand-yellow/40">
+        <i class="fa-solid fa-landmark text-brand-navy"></i>
+      </div>
+      <div>
+        <h2 class="text-2xl font-black text-brand-navy">Sejarah Pendirian Organisasi</h2>
+        <p class="text-xs text-slate-400">Tonggak perjalanan {{ profile.nama_organisasi|default:"Himpunan Mahasiswa Perpajakan UIMANDIRI" }}</p>
+      </div>
+    </div>
+    
+    <div class="space-y-4 text-slate-600 leading-relaxed text-sm sm:text-base">
+      {% if profile.sejarah %}
+        <p class="whitespace-pre-line">{{ profile.sejarah }}</p>
+      {% else %}
+        <p>
+          Himpunan Mahasiswa Perpajakan Universitas Insan Mandiri (HIMA Perpajakan UIMANDIRI) didirikan pada tanggal <strong>14 Juli 2018</strong> oleh para mahasiswa perintis Program Studi Perpajakan dengan bimbingan pimpinan Fakultas Ekonomi & Bisnis. Organisasi ini lahir dari kesadaran pentingnya wadah pengkaderan yang fokus mengkaji dinamika hukum perpajakan, akuntansi perpajakan, dan tata kepatuhan wajib pajak di Indonesia.
+        </p>
+        <p>
+          Pada tahun 2020, HIMA Perpajakan memelopori pembentukan <strong>Tax Center UIMANDIRI</strong> yang bermitra resmi dengan Kantor Wilayah Direktorat Jenderal Pajak (DJP). Melalui kerja sama ini, mahasiswa UIMANDIRI secara berkala dipercaya menjadi Relawan Pajak nasional, membantu ribuan wajib pajak orang pribadi dan UMKM dalam pengisian SPT Tahunan secara cuma-cuma.
+        </p>
+        <p>
+          Kini di era modernisasi sistem <em>Coretax DJP</em>, HIMA Perpajakan UIMANDIRI terus memperkuat reputasinya sebagai salah satu himpunan mahasiswa paling aktif dan profesional, mengedepankan nilai <strong>Integritas, Profesionalitas, dan Akuntabilitas</strong>.
+        </p>
+      {% endif %}
+    </div>
+
+    <!-- Timeline Milestone -->
+    <div class="mt-8 pt-8 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
+      <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+        <span class="font-black text-brand-navy text-base">2018</span>
+        <div class="font-bold text-slate-800 mt-1">Deklarasi HIMA</div>
+        <p class="text-slate-500 mt-0.5">Musyawarah mahasiswa perdana dan pembentukan AD/ART.</p>
+      </div>
+      <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+        <span class="font-black text-brand-navy text-base">2020</span>
+        <div class="font-bold text-slate-800 mt-1">Tax Center UIMANDIRI</div>
+        <p class="text-slate-500 mt-0.5">Penandatanganan MoU resmi kemitraan dengan Kanwil DJP.</p>
+      </div>
+      <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+        <span class="font-black text-brand-navy text-base">2023</span>
+        <div class="font-bold text-slate-800 mt-1">Brevet Mandiri</div>
+        <p class="text-slate-500 mt-0.5">Peluncuran program pelatihan sertifikasi Brevet A/B berkala.</p>
+      </div>
+      <div class="p-4 rounded-xl bg-amber-50 border border-brand-yellow/40">
+        <span class="font-black text-brand-navy text-base">2026</span>
+        <div class="font-bold text-slate-800 mt-1">Era Coretax & Digital</div>
+        <p class="text-slate-600 mt-0.5">Portal digital terintegrasi dan sistem transparansi anggaran.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Visi & Misi Organisasi -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    
+    <!-- Visi -->
+    <div class="bg-gradient-to-br from-brand-navy to-brand-navyLight text-white p-8 sm:p-10 rounded-3xl shadow-md flex flex-col justify-between">
+      <div>
+        <div class="w-14 h-14 rounded-2xl bg-brand-yellow text-brand-navy flex items-center justify-center font-black text-2xl mb-6 shadow">
+          <i class="fa-solid fa-eye"></i>
+        </div>
+        <span class="text-xs font-bold text-brand-yellow uppercase tracking-widest">Pedoman Dasar</span>
+        <h3 class="text-2xl font-black mt-1 mb-4">Visi HIMA Perpajakan</h3>
+        <p class="text-slate-200 text-sm sm:text-base leading-relaxed">
+          {% if profile.visi %}
+            "{{ profile.visi }}"
+          {% else %}
+            "Menjadi himpunan mahasiswa perpajakan yang unggul, profesional, dan berintegritas tinggi dalam mencetak praktisi perpajakan masa depan yang adaptif terhadap transformasi digital fiskal, berdaya saing nasional, serta berkontribusi nyata bagi kepatuhan pajak bangsa."
+          {% endif %}
+        </p>
+      </div>
+      <div class="mt-8 pt-4 border-t border-white/15 text-xs text-brand-yellow font-bold">
+        <i class="fa-solid fa-quote-left mr-1"></i> {{ profile.tagline|default:"Integritas, Profesionalitas, dan Akuntabilitas" }}
+      </div>
+    </div>
+
+    <!-- Misi -->
+    <div class="bg-white p-8 sm:p-10 rounded-3xl shadow-sm border border-slate-200">
+      <div class="w-14 h-14 rounded-2xl bg-amber-50 text-brand-navy flex items-center justify-center font-black text-2xl mb-6 shadow-sm border border-brand-yellow/40">
+        <i class="fa-solid fa-bullseye text-brand-navy"></i>
+      </div>
+      <span class="text-xs font-bold text-brand-navy uppercase tracking-widest">Rencana Strategis</span>
+      <h3 class="text-2xl font-black text-brand-navy mt-1 mb-4">Misi Organisasi</h3>
+      {% if profile.misi %}
+        <div class="space-y-3.5 text-slate-600 text-sm whitespace-pre-line leading-relaxed">
+          {{ profile.misi }}
+        </div>
+      {% else %}
+        <ul class="space-y-3.5 text-slate-600 text-sm">
+          <li class="flex items-start gap-3">
+            <i class="fa-solid fa-circle-check text-brand-yellow mt-1"></i>
+            <span>Mengembangkan kompetensi teknis mahasiswa di bidang KUP, PPh, PPN, Akuntansi Pajak, dan pengoperasian sistem Coretax DJP.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <i class="fa-solid fa-circle-check text-brand-yellow mt-1"></i>
+            <span>Menjadi pusat kajian kritis terhadap pembaruan regulasi perpajakan nasional dan internasional yang solutif bagi iklim usaha.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <i class="fa-solid fa-circle-check text-brand-yellow mt-1"></i>
+            <span>Meningkatkan kepedulian masyarakat terhadap pajak melalui program Tax Goes to School, Relawan Pajak, dan pendampingan UMKM.</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <i class="fa-solid fa-circle-check text-brand-yellow mt-1"></i>
+            <span>Mempraktikkan budaya transparansi tata kelola anggaran dan pelaporan pertanggungjawaban (LPJ) yang akuntabel secara terbuka.</span>
+          </li>
+        </ul>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- Makna Lambang (Jika ada) -->
+  {% if profile.makna_lambang %}
+  <div class="bg-white p-8 sm:p-10 rounded-3xl shadow-sm border border-slate-200">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-12 h-12 rounded-2xl bg-amber-50 text-brand-navy flex items-center justify-center font-bold text-xl border border-brand-yellow/40">
+        <i class="fa-solid fa-shield-halved text-brand-navy"></i>
+      </div>
+      <div>
+        <h2 class="text-2xl font-black text-brand-navy">Makna Lambang Organisasi</h2>
+        <p class="text-xs text-slate-400">Filosofi dan identitas visual {{ profile.nama_organisasi }}</p>
+      </div>
+    </div>
+    <p class="text-slate-600 text-sm sm:text-base leading-relaxed whitespace-pre-line">{{ profile.makna_lambang }}</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,236 @@
+<!-- TOP BAR / CONTACT INFO & MODE SWITCHER -->
+<div class="bg-brand-navyDark text-slate-300 text-xs px-4 py-2 border-b border-white/10 flex flex-wrap items-center justify-between gap-2 z-50">
+  <div class="flex items-center space-x-3">
+    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-brand-yellow text-slate-950">
+      <i class="fa-solid fa-scale-balanced mr-1"></i> {{ profile.nama_organisasi|default:"HIMA PERPAJAKAN" }}
+    </span>
+    <span class="hidden md:inline text-slate-300">
+      <i class="fa-solid fa-building-columns mr-1 text-brand-yellow"></i> Program Studi Perpajakan - Universitas Insan Mandiri (UIMANDIRI)
+    </span>
+  </div>
+  <div class="flex items-center space-x-3">
+    {% if profile.no_whatsapp %}
+    <a href="https://wa.me/{{ profile.no_whatsapp }}?text=Halo%20Sekretariat%20{{ profile.nama_organisasi|default:'HIMA Perpajakan'|urlencode }}" target="_blank" class="text-slate-300 hover:text-brand-yellow transition flex items-center gap-1">
+      <i class="fa-brands fa-whatsapp text-emerald-400"></i> <span class="hidden sm:inline">{{ profile.no_whatsapp }}</span>
+    </a>
+    <span class="text-slate-600">|</span>
+    {% endif %}
+    <span class="text-slate-400">Mode:</span>
+    <a href="{% url 'home' %}" class="px-2.5 py-0.5 rounded bg-brand-yellow text-slate-950 font-bold transition">Publik</a>
+    <a href="{% url 'admin_dashboard' %}" class="px-2.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white transition flex items-center gap-1 font-semibold">
+      <i class="fa-solid fa-gauge-high text-brand-yellow"></i> Admin
+    </a>
+    <a href="{% url 'login' %}" class="px-2.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-slate-300 transition">
+      <i class="fa-solid fa-arrow-right-to-bracket mr-1"></i> Login
+    </a>
+  </div>
+</div>
+
+<!-- MAIN HEADER / NAVBAR -->
+<header class="sticky top-0 z-40 bg-brand-navy/95 backdrop-blur-md text-white shadow-lg transition-all duration-300 border-b border-white/10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-20">
+      
+      <!-- Logo HIMA Perpajakan -->
+      <a href="{% url 'home' %}" class="flex items-center gap-3 group shrink-0">
+        <div class="w-11 h-11 rounded-xl bg-brand-yellow flex items-center justify-center text-brand-navy font-black text-2xl shadow-md group-hover:scale-105 transition">
+          <i class="fa-solid fa-scale-balanced"></i>
+        </div>
+        <div>
+          <div class="font-black text-base md:text-lg tracking-wider leading-tight text-white flex items-center gap-1.5">
+            HIMA <span class="text-brand-yellow">PERPAJAKAN</span>
+          </div>
+          <div class="text-[10px] text-slate-300 tracking-wider font-semibold uppercase">
+            UIMANDIRI &bull; Coretax Ready
+          </div>
+        </div>
+      </a>
+
+      <!-- Desktop Navigation (lg and up) -->
+      <nav class="hidden lg:flex items-center space-x-1 xl:space-x-2 text-sm font-medium">
+        <!-- Beranda -->
+        <a href="{% url 'home' %}" class="nav-link-top {% if request.resolver_match.url_name in 'home,home_html' %}active{% endif %} px-3 py-2 rounded-lg hover:text-brand-yellow hover:bg-white/5 transition" id="nav-beranda">
+          Beranda
+        </a>
+
+        <!-- Dropdown: Tentang Kami -->
+        <div class="relative group">
+          <button id="nav-dropdown-tentang" class="nav-link-top {% if request.resolver_match.url_name in 'profil,struktur,anggota,anggota_alias,arsip' %}active{% endif %} px-3 py-2 rounded-lg hover:text-brand-yellow hover:bg-white/5 transition flex items-center gap-1.5">
+            <span>Tentang</span>
+            <i class="fa-solid fa-chevron-down text-[10px] group-hover:rotate-180 transition-transform duration-200"></i>
+          </button>
+          <div class="absolute left-0 top-full pt-2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200 z-50 transform group-hover:translate-y-0 translate-y-1">
+            <div class="bg-brand-navyDark border border-white/10 rounded-xl shadow-2xl p-2 space-y-1">
+              <a href="{% url 'profil' %}" id="nav-profil" class="nav-dropdown-item {% if request.resolver_match.url_name == 'profil' %}active{% endif %} px-3 py-2 rounded-lg text-xs font-semibold text-slate-200 hover:text-brand-yellow hover:bg-white/10 transition flex items-center gap-2.5">
+                <i class="fa-solid fa-id-card text-brand-yellow w-4 text-center"></i>
+                <span>Profil & Visi Misi</span>
+              </a>
+              <a href="{% url 'struktur' %}" id="nav-struktur" class="nav-dropdown-item {% if request.resolver_match.url_name == 'struktur' %}active{% endif %} px-3 py-2 rounded-lg text-xs font-semibold text-slate-200 hover:text-brand-yellow hover:bg-white/10 transition flex items-center gap-2.5">
+                <i class="fa-solid fa-sitemap text-brand-yellow w-4 text-center"></i>
+                <span>Struktur Kepengurusan</span>
+              </a>
+              <a href="{% url 'anggota' %}" id="nav-anggota" class="nav-dropdown-item {% if request.resolver_match.url_name in 'anggota,anggota_alias' %}active{% endif %} px-3 py-2 rounded-lg text-xs font-semibold text-slate-200 hover:text-brand-yellow hover:bg-white/10 transition flex items-center gap-2.5">
+                <i class="fa-solid fa-user-graduate text-brand-yellow w-4 text-center"></i>
+                <span>Data Mahasiswa Seluruh Pajak</span>
+              </a>
+              <a href="{% url 'arsip' %}" id="nav-arsip" class="nav-dropdown-item {% if request.resolver_match.url_name == 'arsip' %}active{% endif %} px-3 py-2 rounded-lg text-xs font-semibold text-slate-200 hover:text-brand-yellow hover:bg-white/10 transition flex items-center gap-2.5">
+                <i class="fa-solid fa-box-archive text-brand-yellow w-4 text-center"></i>
+                <span>Arsip Riwayat Periode</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Program Kerja -->
+        <a href="{% url 'proker' %}" class="nav-link-top {% if request.resolver_match.url_name == 'proker' %}active{% endif %} px-3 py-2 rounded-lg hover:text-brand-yellow hover:bg-white/5 transition" id="nav-proker">
+          Program Kerja
+        </a>
+
+        <!-- Transparansi Anggaran (Special Badge Style) -->
+        <a href="{% url 'anggaran' %}" class="nav-link-top {% if request.resolver_match.url_name in 'anggaran,anggaran_alias' %}active{% endif %} px-3 py-1.5 rounded-lg text-brand-yellow hover:text-white hover:bg-brand-yellow/20 transition font-bold flex items-center gap-1.5 border border-brand-yellow/30 bg-brand-yellow/10" id="nav-anggaran">
+          <i class="fa-solid fa-file-invoice-dollar"></i>
+          <span>Transparansi Kas</span>
+        </a>
+
+        <!-- Dropdown: Publikasi -->
+        <div class="relative group">
+          <button id="nav-dropdown-publikasi" class="nav-link-top {% if request.resolver_match.url_name in 'berita,berita_detail,berita_detail_by_id,galeri' %}active{% endif %} px-3 py-2 rounded-lg hover:text-brand-yellow hover:bg-white/5 transition flex items-center gap-1.5">
+            <span>Publikasi</span>
+            <i class="fa-solid fa-chevron-down text-[10px] group-hover:rotate-180 transition-transform duration-200"></i>
+          </button>
+          <div class="absolute left-0 top-full pt-2 w-52 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200 z-50 transform group-hover:translate-y-0 translate-y-1">
+            <div class="bg-brand-navyDark border border-white/10 rounded-xl shadow-2xl p-2 space-y-1">
+              <a href="{% url 'berita' %}" id="nav-berita" class="nav-dropdown-item {% if request.resolver_match.url_name in 'berita,berita_detail,berita_detail_by_id' %}active{% endif %} px-3 py-2 rounded-lg text-xs font-semibold text-slate-200 hover:text-brand-yellow hover:bg-white/10 transition flex items-center gap-2.5">
+                <i class="fa-solid fa-newspaper text-brand-yellow w-4 text-center"></i>
+                <span>Berita & Pengumuman</span>
+              </a>
+              <a href="{% url 'galeri' %}" id="nav-galeri" class="nav-dropdown-item {% if request.resolver_match.url_name == 'galeri' %}active{% endif %} px-3 py-2 rounded-lg text-xs font-semibold text-slate-200 hover:text-brand-yellow hover:bg-white/10 transition flex items-center gap-2.5">
+                <i class="fa-solid fa-images text-brand-yellow w-4 text-center"></i>
+                <span>Galeri Dokumentasi</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dropdown: Layanan -->
+        <div class="relative group">
+          <button id="nav-dropdown-layanan" class="nav-link-top {% if request.resolver_match.url_name in 'formulir,aspirasi' %}active{% endif %} px-3 py-2 rounded-lg hover:text-brand-yellow hover:bg-white/5 transition flex items-center gap-1.5">
+            <span>Layanan</span>
+            <i class="fa-solid fa-chevron-down text-[10px] group-hover:rotate-180 transition-transform duration-200"></i>
+          </button>
+          <div class="absolute left-0 top-full pt-2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200 z-50 transform group-hover:translate-y-0 translate-y-1">
+            <div class="bg-brand-navyDark border border-white/10 rounded-xl shadow-2xl p-2 space-y-1">
+              <a href="{% url 'formulir' %}" id="nav-formulir" class="nav-dropdown-item {% if request.resolver_match.url_name == 'formulir' %}active{% endif %} px-3 py-2 rounded-lg text-xs font-semibold text-slate-200 hover:text-brand-yellow hover:bg-white/10 transition flex items-center gap-2.5">
+                <i class="fa-solid fa-file-signature text-brand-yellow w-4 text-center"></i>
+                <span>Formulir Pendaftaran</span>
+              </a>
+              <a href="{% url 'aspirasi' %}" id="nav-aspirasi" class="nav-dropdown-item {% if request.resolver_match.url_name == 'aspirasi' %}active{% endif %} px-3 py-2 rounded-lg text-xs font-semibold text-slate-200 hover:text-brand-yellow hover:bg-white/10 transition flex items-center gap-2.5">
+                <i class="fa-solid fa-bullhorn text-brand-yellow w-4 text-center"></i>
+                <span>Kotak Aspirasi & Suara</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Kontak -->
+        <a href="{% url 'kontak' %}" class="nav-link-top {% if request.resolver_match.url_name == 'kontak' %}active{% endif %} px-3 py-2 rounded-lg hover:text-brand-yellow hover:bg-white/5 transition" id="nav-kontak">
+          Kontak
+        </a>
+      </nav>
+
+      <!-- Right Quick Actions -->
+      <div class="hidden sm:flex items-center gap-2 shrink-0">
+        <a href="{% url 'admin_dashboard' %}" class="inline-flex items-center gap-2 bg-brand-yellow hover:bg-brand-yellowHover text-brand-navy font-black text-xs uppercase px-3.5 py-2 rounded-xl shadow-md transition duration-200 transform hover:-translate-y-0.5">
+          <i class="fa-solid fa-lock text-xs"></i>
+          <span>Portal Admin</span>
+        </a>
+      </div>
+
+      <!-- Mobile Hamburger Button -->
+      <div class="lg:hidden flex items-center">
+        <button id="mobile-menu-btn" aria-label="Menu Navigasi" class="text-white hover:text-brand-yellow p-2 focus:outline-none transition">
+          <i class="fa-solid fa-bars text-2xl"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Navigation Drawer -->
+  <div id="mobile-menu" class="hidden lg:hidden bg-brand-navyDark border-t border-white/10 px-4 pt-3 pb-6 space-y-4 max-h-[80vh] overflow-y-auto shadow-2xl">
+    <!-- Group: Navigasi Utama -->
+    <div>
+      <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 px-3">Navigasi Utama</div>
+      <div class="space-y-1">
+        <a href="{% url 'home' %}" id="mob-nav-beranda" class="mobile-nav-link {% if request.resolver_match.url_name in 'home,home_html' %}active{% endif %} flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-semibold text-white hover:bg-brand-navy hover:text-brand-yellow transition">
+          <i class="fa-solid fa-house w-4 text-center text-brand-yellow"></i>
+          <span>Beranda</span>
+        </a>
+        <a href="{% url 'proker' %}" id="mob-nav-proker" class="mobile-nav-link {% if request.resolver_match.url_name == 'proker' %}active{% endif %} flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-semibold text-white hover:bg-brand-navy hover:text-brand-yellow transition">
+          <i class="fa-solid fa-calendar-check w-4 text-center text-brand-yellow"></i>
+          <span>Program Kerja & Kegiatan</span>
+        </a>
+        <a href="{% url 'anggaran' %}" id="mob-nav-anggaran" class="mobile-nav-link {% if request.resolver_match.url_name in 'anggaran,anggaran_alias' %}active{% endif %} flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-bold text-brand-yellow bg-white/5 hover:bg-brand-navy transition border border-brand-yellow/20">
+          <i class="fa-solid fa-file-invoice-dollar w-4 text-center"></i>
+          <span>Transparansi Kas & Anggaran</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Group: Tentang Organisasi -->
+    <div>
+      <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 px-3">Tentang Organisasi</div>
+      <div class="space-y-1">
+        <a href="{% url 'profil' %}" id="mob-nav-profil" class="mobile-nav-link {% if request.resolver_match.url_name == 'profil' %}active{% endif %} flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-semibold text-white hover:bg-brand-navy hover:text-brand-yellow transition">
+          <i class="fa-solid fa-id-card w-4 text-center text-slate-400"></i>
+          <span>Profil & Visi Misi</span>
+        </a>
+        <a href="{% url 'struktur' %}" id="mob-nav-struktur" class="mobile-nav-link {% if request.resolver_match.url_name == 'struktur' %}active{% endif %} flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-semibold text-white hover:bg-brand-navy hover:text-brand-yellow transition">
+          <i class="fa-solid fa-sitemap w-4 text-center text-slate-400"></i>
+          <span>Struktur Kepengurusan</span>
+        </a>
+        <a href="{% url 'anggota' %}" id="mob-nav-anggota" class="mobile-nav-link {% if request.resolver_match.url_name in 'anggota,anggota_alias' %}active{% endif %} flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-semibold text-white hover:bg-brand-navy hover:text-brand-yellow transition">
+          <i class="fa-solid fa-user-graduate w-4 text-center text-slate-400"></i>
+          <span>Data Mahasiswa Seluruh Pajak</span>
+        </a>
+        <a href="{% url 'arsip' %}" id="mob-nav-arsip" class="mobile-nav-link {% if request.resolver_match.url_name == 'arsip' %}active{% endif %} flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-semibold text-white hover:bg-brand-navy hover:text-brand-yellow transition">
+          <i class="fa-solid fa-box-archive w-4 text-center text-slate-400"></i>
+          <span>Arsip & Riwayat Periode</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Group: Publikasi & Layanan -->
+    <div>
+      <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 px-3">Publikasi & Layanan</div>
+      <div class="space-y-1">
+        <a href="{% url 'berita' %}" id="mob-nav-berita" class="mobile-nav-link {% if request.resolver_match.url_name in 'berita,berita_detail,berita_detail_by_id' %}active{% endif %} flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-semibold text-white hover:bg-brand-navy hover:text-brand-yellow transition">
+          <i class="fa-solid fa-newspaper w-4 text-center text-slate-400"></i>
+          <span>Berita & Pengumuman</span>
+        </a>
+        <a href="{% url 'galeri' %}" id="mob-nav-galeri" class="mobile-nav-link {% if request.resolver_match.url_name == 'galeri' %}active{% endif %} flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-semibold text-white hover:bg-brand-navy hover:text-brand-yellow transition">
+          <i class="fa-solid fa-images w-4 text-center text-slate-400"></i>
+          <span>Galeri Dokumentasi</span>
+        </a>
+        <a href="{% url 'formulir' %}" id="mob-nav-formulir" class="mobile-nav-link {% if request.resolver_match.url_name == 'formulir' %}active{% endif %} flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-semibold text-white hover:bg-brand-navy hover:text-brand-yellow transition">
+          <i class="fa-solid fa-file-signature w-4 text-center text-slate-400"></i>
+          <span>Formulir Pendaftaran Online</span>
+        </a>
+        <a href="{% url 'aspirasi' %}" id="mob-nav-aspirasi" class="mobile-nav-link {% if request.resolver_match.url_name == 'aspirasi' %}active{% endif %} flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-semibold text-white hover:bg-brand-navy hover:text-brand-yellow transition">
+          <i class="fa-solid fa-bullhorn w-4 text-center text-slate-400"></i>
+          <span>Kotak Aspirasi & Saran</span>
+        </a>
+        <a href="{% url 'kontak' %}" id="mob-nav-kontak" class="mobile-nav-link {% if request.resolver_match.url_name == 'kontak' %}active{% endif %} flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-semibold text-white hover:bg-brand-navy hover:text-brand-yellow transition">
+          <i class="fa-solid fa-address-book w-4 text-center text-slate-400"></i>
+          <span>Kontak & Sekretariat</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Quick Action Buttons -->
+    <div class="pt-2 border-t border-white/10 space-y-2">
+      <a href="{% url 'admin_dashboard' %}" class="block w-full text-center bg-brand-yellow hover:bg-brand-yellowHover text-brand-navy font-black px-4 py-2.5 rounded-xl shadow text-xs uppercase tracking-wider transition">
+        <i class="fa-solid fa-lock mr-1.5"></i> Masuk Portal Admin
+      </a>
+    </div>
+  </div>
+</header>

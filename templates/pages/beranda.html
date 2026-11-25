@@ -1,0 +1,423 @@
+{% extends 'base.html' %}
+
+{% block title %}Beranda - {{ profile.nama_organisasi|default:"HIMA PERPAJAKAN UIMANDIRI" }}{% endblock %}
+
+{% block content %}
+      
+      <!-- Hero Section -->
+      <section class="hero-pattern text-white py-20 lg:py-28 relative overflow-hidden">
+        <div class="absolute -right-20 -bottom-20 w-96 h-96 bg-brand-yellow/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-20 top-10 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            
+            <div class="lg:col-span-7 space-y-6">
+              <div class="inline-flex items-center gap-2 bg-brand-yellow/15 border border-brand-yellow/30 px-3.5 py-1.5 rounded-full text-xs font-bold text-brand-yellow uppercase tracking-wider">
+                <i class="fa-solid fa-scale-balanced"></i> HIMA Perpajakan UIMANDIRI &bull; Periode 2026/2027
+              </div>
+              <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
+                Membangun Generasi Fiskal Unggul di Era <span class="text-brand-yellow underline decoration-brand-yellow/40">Coretax DJP</span>
+              </h1>
+              <p class="text-base sm:text-lg text-slate-300 leading-relaxed max-w-2xl">
+                Wadah aspirasi, pengkajian regulasi perpajakan, riset kepatuhan wajib pajak, serta pembinaan kompetensi praktis bagi seluruh civitas akademika Program Studi Perpajakan Universitas Insan Mandiri.
+              </p>
+              
+              <div class="flex flex-wrap gap-3 pt-2">
+                <button onclick="showPage('anggaran')" class="bg-brand-yellow hover:bg-brand-yellowHover text-brand-navy font-black px-6 py-3.5 rounded-xl shadow-lg transition transform hover:-translate-y-0.5 flex items-center gap-2 text-sm">
+                  <i class="fa-solid fa-coins"></i>
+                  <span>Transparansi Kas & Anggaran</span>
+                </button>
+                <button onclick="showPage('formulir')" class="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold px-6 py-3.5 rounded-xl backdrop-blur transition flex items-center gap-2 text-sm">
+                  <i class="fa-solid fa-user-plus text-brand-yellow"></i>
+                  <span>Pendaftaran Relawan & Anggota</span>
+                </button>
+                <button onclick="showPage('arsip')" class="bg-slate-900/60 hover:bg-slate-900 text-slate-300 hover:text-white font-semibold px-4 py-3.5 rounded-xl transition flex items-center gap-1.5 text-xs">
+                  <i class="fa-solid fa-clock-rotate-left"></i> Arsip Periode
+                </button>
+              </div>
+
+              <!-- Mini Feature Badges -->
+              <div class="pt-6 border-t border-white/10 flex flex-wrap gap-5 text-xs sm:text-sm text-slate-300">
+                <div class="flex items-center gap-2">
+                  <i class="fa-solid fa-circle-check text-brand-yellow"></i> Tax Center Resmi
+                </div>
+                <div class="flex items-center gap-2">
+                  <i class="fa-solid fa-circle-check text-brand-yellow"></i> Sertifikasi Brevet A/B
+                </div>
+                <div class="flex items-center gap-2">
+                  <i class="fa-solid fa-circle-check text-brand-yellow"></i> Laporan Keuangan 100% Terbuka
+                </div>
+              </div>
+            </div>
+
+            <!-- Hero Interactive Banner Card -->
+            <div class="lg:col-span-5">
+              <div class="relative bg-gradient-to-tr from-brand-navyLight to-brand-navy p-3.5 rounded-3xl shadow-2xl border border-white/15">
+                <div class="relative rounded-2xl overflow-hidden aspect-[4/3] bg-slate-900">
+                  <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=900&q=80" alt="Seminar Perpajakan UIMANDIRI" class="w-full h-full object-cover">
+                  <div class="absolute inset-0 bg-gradient-to-t from-brand-navy/95 via-brand-navy/40 to-transparent flex items-end p-6">
+                    <div>
+                      <span class="bg-brand-yellow text-brand-navy text-[10px] font-black px-2 py-0.5 rounded uppercase">Program Unggulan</span>
+                      <h4 class="text-white font-extrabold text-lg mt-1">Tax Gathering & Sosialisasi Coretax System 2026</h4>
+                      <p class="text-slate-300 text-xs mt-1">Kolaborasi edukasi kepatuhan pajak bersama Kanwil DJP & Tax Center UIMANDIRI.</p>
+                    </div>
+                  </div>
+                </div>
+                <!-- Floating KPI Badge -->
+                <div class="absolute -bottom-6 -left-4 bg-white text-slate-900 rounded-2xl p-4 shadow-2xl border border-slate-200 flex items-center gap-3">
+                  <div class="w-12 h-12 rounded-xl bg-amber-50 text-brand-navy flex items-center justify-center font-black text-2xl border border-brand-yellow/30">
+                    <i class="fa-solid fa-hand-holding-dollar text-brand-navy"></i>
+                  </div>
+                  <div>
+                    <div class="text-[11px] text-slate-400 font-semibold uppercase">Total Saldo Kas HIMA</div>
+                    <div class="text-base font-black text-brand-navy">Rp {{ saldo_kas|floatformat:0 }}</div>
+                    <div class="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+                      <i class="fa-solid fa-circle-check"></i> Terverifikasi Audit LPJ
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- Statistik Counter Section (Mahasiswa Aktif, Alumni, Total, Kas) -->
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 relative z-20">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+          
+          <div onclick="showPage('anggota'); setMemberFilter('Aktif')" class="bg-white p-5 rounded-2xl shadow-md border border-slate-200 hover:shadow-xl hover:border-emerald-400 hover:-translate-y-1 transition duration-200 cursor-pointer group">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-2xl sm:text-3xl font-black text-emerald-700 group-hover:scale-105 transition origin-left">{{ total_mahasiswa_aktif }}</div>
+                <div class="text-xs text-slate-700 font-bold mt-1">Mahasiswa Aktif</div>
+              </div>
+              <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl group-hover:bg-emerald-600 group-hover:text-white transition">
+                <i class="fa-solid fa-user-check"></i>
+              </div>
+            </div>
+            <div class="mt-2 text-[10px] text-emerald-600 font-bold flex items-center justify-between">
+              <span class="flex items-center gap-1"><i class="fa-solid fa-circle-check"></i> Aktif Berkuliah</span>
+              <span class="text-slate-400 group-hover:text-emerald-700 text-[10px] font-semibold">Lihat &rarr;</span>
+            </div>
+          </div>
+
+          <div onclick="showPage('anggota'); setMemberFilter('Alumni')" class="bg-white p-5 rounded-2xl shadow-md border border-slate-200 hover:shadow-xl hover:border-blue-400 hover:-translate-y-1 transition duration-200 cursor-pointer group">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-2xl sm:text-3xl font-black text-blue-700 group-hover:scale-105 transition origin-left">{{ total_alumni }}</div>
+                <div class="text-xs text-slate-700 font-bold mt-1">Alumni Mahasiswa</div>
+              </div>
+              <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl group-hover:bg-blue-600 group-hover:text-white transition">
+                <i class="fa-solid fa-graduation-cap"></i>
+              </div>
+            </div>
+            <div class="mt-2 text-[10px] text-blue-600 font-bold flex items-center justify-between">
+              <span class="flex items-center gap-1"><i class="fa-solid fa-award"></i> Lulusan Perpajakan</span>
+              <span class="text-slate-400 group-hover:text-blue-700 text-[10px] font-semibold">Lihat &rarr;</span>
+            </div>
+          </div>
+
+          <div onclick="showPage('anggota'); setMemberFilter('all')" class="bg-white p-5 rounded-2xl shadow-md border border-slate-200 hover:shadow-xl hover:border-amber-400 hover:-translate-y-1 transition duration-200 cursor-pointer group">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-2xl sm:text-3xl font-black text-brand-navy group-hover:text-brand-yellowHover transition">{{ total_mahasiswa }}</div>
+                <div class="text-xs text-slate-700 font-bold mt-1">Total Mahasiswa Pajak</div>
+              </div>
+              <div class="w-11 h-11 rounded-xl bg-amber-50 text-brand-navy flex items-center justify-center text-xl group-hover:bg-brand-navy group-hover:text-brand-yellow transition">
+                <i class="fa-solid fa-users"></i>
+              </div>
+            </div>
+            <div class="mt-2 text-[10px] text-amber-700 font-bold flex items-center justify-between">
+              <span class="flex items-center gap-1"><i class="fa-solid fa-database text-brand-yellow"></i> Direktori Lengkap</span>
+              <span class="text-slate-400 group-hover:text-brand-navy text-[10px] font-semibold">Lihat &rarr;</span>
+            </div>
+          </div>
+
+          <div onclick="showPage('kas')" class="bg-white p-5 rounded-2xl shadow-md border border-slate-200 hover:shadow-xl hover:border-emerald-400 hover:-translate-y-1 transition duration-200 cursor-pointer group">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-2xl sm:text-3xl font-black text-emerald-600">100%</div>
+                <div class="text-xs text-slate-700 font-bold mt-1">Transparansi Dana</div>
+              </div>
+              <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-xl group-hover:bg-emerald-700 group-hover:text-white transition">
+                <i class="fa-solid fa-receipt"></i>
+              </div>
+            </div>
+            <div class="mt-2 text-[10px] text-emerald-700 font-bold flex items-center justify-between">
+              <span class="flex items-center gap-1"><i class="fa-solid fa-file-pdf"></i> LPJ Terbuka Ormawa</span>
+              <span class="text-slate-400 group-hover:text-emerald-700 text-[10px] font-semibold">Lihat &rarr;</span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Sambutan Ketua HIMA Perpajakan (Requirement 5) -->
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div class="bg-white rounded-3xl p-8 sm:p-12 shadow-md border border-slate-200">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            
+            <div class="lg:col-span-4 text-center">
+              <div class="relative inline-block">
+                <div class="w-48 h-48 sm:w-56 sm:h-56 rounded-2xl overflow-hidden shadow-xl border-4 border-brand-yellow mx-auto">
+                  <img src="{{ profile.get_foto_ketua }}" alt="Ketua {{ profile.nama_organisasi }}" class="w-full h-full object-cover">
+                </div>
+                <div class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-brand-navy text-white text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap shadow border border-brand-yellow/40">
+                  Ketua Umum Periode {{ profile.periode_aktif }}
+                </div>
+              </div>
+              <h3 class="text-xl font-bold text-brand-navy mt-5">{{ profile.nama_ketua }}</h3>
+              <p class="text-xs text-slate-500 font-mono mt-0.5">{{ profile.nama_organisasi }}</p>
+            </div>
+
+            <div class="lg:col-span-8 space-y-4">
+              <div class="inline-flex items-center gap-2 text-brand-navy font-bold text-xs uppercase tracking-widest bg-amber-50 px-3 py-1 rounded-full">
+                <span class="w-2.5 h-2.5 rounded-full bg-brand-yellow"></span> Sambutan Ketua Himpunan Mahasiswa Perpajakan
+              </div>
+              <h2 class="text-2xl sm:text-3xl font-black text-brand-navy leading-snug">
+                "{{ profile.tagline }}"
+              </h2>
+              <div class="text-slate-600 leading-relaxed text-sm sm:text-base whitespace-pre-line">
+                {{ profile.sambutan_ketua }}
+              </div>
+              <div class="pt-2 flex flex-wrap items-center gap-4">
+                <button onclick="showPage('profil')" class="text-xs font-bold text-brand-navy hover:text-brand-yellowHover flex items-center gap-1.5 transition">
+                  Baca Sejarah & Visi Misi <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </button>
+                <button onclick="showPage('anggaran')" class="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1.5 transition">
+                  <i class="fa-solid fa-shield-halved"></i> Lihat Laporan Transparansi Keuangan
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- Program Kerja & Kegiatan Terkini (Requirement 37, 38, 48) -->
+      <section class="bg-slate-100/70 py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-brand-yellow bg-brand-navy px-3 py-1 rounded-md">Kegiatan & Agenda Fiskal</span>
+              <h2 class="text-2xl sm:text-3xl font-black text-brand-navy mt-2">Agenda Kegiatan & Pelatihan Perpajakan</h2>
+              <p class="text-sm text-slate-600 mt-1">Tingkatkan wawasan dan keahlian brevet Anda bersama HIMA Perpajakan UIMANDIRI.</p>
+            </div>
+            <button onclick="showPage('proker')" class="inline-flex items-center gap-2 text-brand-navy font-bold text-sm hover:underline">
+              Lihat Seluruh Proker & Kegiatan <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- Proker Card 1 -->
+            <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition duration-300 border border-slate-200 group flex flex-col justify-between">
+              <div>
+                <div class="relative h-48 overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=700&q=80" alt="Brevet Pajak A & B" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                  <span class="absolute top-3 left-3 bg-brand-navy text-white text-[11px] font-bold px-2.5 py-1 rounded-md">
+                    Pelatihan Brevet
+                  </span>
+                  <span class="absolute top-3 right-3 bg-brand-yellow text-slate-900 text-[11px] font-bold px-2.5 py-1 rounded-md">
+                    Batch 14 - Nov 2026
+                  </span>
+                </div>
+                <div class="p-6">
+                  <h3 class="font-bold text-lg text-brand-navy group-hover:text-brand-yellowHover transition line-clamp-2">
+                    Pelatihan Intensif Brevet Pajak Terpadu A & B
+                  </h3>
+                  <p class="text-slate-600 text-xs sm:text-sm mt-2 line-clamp-2">
+                    Pemahaman menyeluruh KUP, PPh Orang Pribadi, PPh Badan, PPN/PPnBM, serta praktik simulasi e-Faktur dan e-Bupot Unifikasi.
+                  </p>
+                  <div class="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                    <span class="flex items-center gap-1"><i class="fa-regular fa-clock text-brand-navy"></i> Sabtu & Minggu</span>
+                    <span class="flex items-center gap-1"><i class="fa-solid fa-location-dot text-brand-navy"></i> Lab Tax Center</span>
+                  </div>
+                </div>
+              </div>
+              <div class="p-6 pt-0">
+                <button onclick="openRegisterEventModal('Brevet Pajak Terpadu A & B Batch 14')" class="w-full py-2.5 bg-brand-navy hover:bg-brand-navyLight text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-file-pen text-brand-yellow"></i> Daftar Pelatihan
+                </button>
+              </div>
+            </div>
+
+            <!-- Proker Card 2 -->
+            <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition duration-300 border border-slate-200 group flex flex-col justify-between">
+              <div>
+                <div class="relative h-48 overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=700&q=80" alt="Relawan Pajak" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                  <span class="absolute top-3 left-3 bg-brand-navy text-white text-[11px] font-bold px-2.5 py-1 rounded-md">
+                    Pengabdian
+                  </span>
+                  <span class="absolute top-3 right-3 bg-brand-yellow text-slate-900 text-[11px] font-bold px-2.5 py-1 rounded-md">
+                    SPT Tahunan 2026
+                  </span>
+                </div>
+                <div class="p-6">
+                  <h3 class="font-bold text-lg text-brand-navy group-hover:text-brand-yellowHover transition line-clamp-2">
+                    Program Relawan Pajak UIMANDIRI: Pendampingan SPT Tahunan
+                  </h3>
+                  <p class="text-slate-600 text-xs sm:text-sm mt-2 line-clamp-2">
+                    Penugasan mahasiswa sebagai relawan resmi asistensi pengisian SPT Tahunan PPh Orang Pribadi di KPP Pratama dan pojok pajak mall.
+                  </p>
+                  <div class="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                    <span class="flex items-center gap-1"><i class="fa-regular fa-clock text-brand-navy"></i> Jan - Mar 2027</span>
+                    <span class="flex items-center gap-1"><i class="fa-solid fa-location-dot text-brand-navy"></i> KPP & Pojok Pajak</span>
+                  </div>
+                </div>
+              </div>
+              <div class="p-6 pt-0">
+                <button onclick="openRegisterEventModal('Relawan Pajak 2027')" class="w-full py-2.5 bg-brand-navy hover:bg-brand-navyLight text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-handshake-angle text-brand-yellow"></i> Daftar Relawan Pajak
+                </button>
+              </div>
+            </div>
+
+            <!-- Proker Card 3 -->
+            <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition duration-300 border border-slate-200 group flex flex-col justify-between">
+              <div>
+                <div class="relative h-48 overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1591696205602-2f950c417cb9?auto=format&fit=crop&w=700&q=80" alt="Tax Case Competition" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                  <span class="absolute top-3 left-3 bg-brand-navy text-white text-[11px] font-bold px-2.5 py-1 rounded-md">
+                    Kompetisi Nasional
+                  </span>
+                  <span class="absolute top-3 right-3 bg-brand-yellow text-slate-900 text-[11px] font-bold px-2.5 py-1 rounded-md">
+                    Desember 2026
+                  </span>
+                </div>
+                <div class="p-6">
+                  <h3 class="font-bold text-lg text-brand-navy group-hover:text-brand-yellowHover transition line-clamp-2">
+                    National Tax Case Competition & Coretax Hackathon
+                  </h3>
+                  <p class="text-slate-600 text-xs sm:text-sm mt-2 line-clamp-2">
+                    Lomba analisis studi kasus perpajakan internasional, transfer pricing, dan efisiensi perpajakan UMKM dengan total hadiah Rp 25.000.000.
+                  </p>
+                  <div class="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                    <span class="flex items-center gap-1"><i class="fa-regular fa-clock text-brand-navy"></i> Hybrid Format</span>
+                    <span class="flex items-center gap-1"><i class="fa-solid fa-location-dot text-brand-navy"></i> Aula UIMANDIRI</span>
+                  </div>
+                </div>
+              </div>
+              <div class="p-6 pt-0">
+                <button onclick="openRegisterEventModal('National Tax Case Competition 2026')" class="w-full py-2.5 bg-brand-navy hover:bg-brand-navyLight text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-trophy text-brand-yellow"></i> Daftar Tim Lomba
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- Sekilas Transparansi Anggaran (Highlight Fitur Unggulan) -->
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div class="bg-gradient-to-r from-brand-navy to-brand-navyDark text-white rounded-3xl p-8 sm:p-12 shadow-xl border border-white/10 relative overflow-hidden">
+          <div class="absolute -right-16 -top-16 w-80 h-80 bg-brand-yellow/10 rounded-full blur-2xl pointer-events-none"></div>
+          
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
+            <div class="lg:col-span-8 space-y-4">
+              <span class="bg-brand-yellow text-brand-navy text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                <i class="fa-solid fa-shield-halved mr-1"></i> Fitur Unggulan Transparansi Publik
+              </span>
+              <h2 class="text-2xl sm:text-3xl font-black">
+                Transparansi Anggaran Kas & Penggunaan Dana Ormawa
+              </h2>
+              <p class="text-slate-300 text-sm leading-relaxed max-w-2xl">
+                Sebagai mahasiswa perpajakan yang menjunjung tinggi akuntabilitas keuangan publik, HIMA Perpajakan UIMANDIRI mempublikasikan pemasukan iuran, dana kemahasiswaan rektorat, sponsorship, dan rincian kuitansi pengeluaran setiap kegiatan secara terbuka.
+              </p>
+              
+              <div class="grid grid-cols-3 gap-3 pt-2">
+                <div class="bg-white/10 p-3.5 rounded-xl border border-white/10">
+                  <div class="text-[10px] text-slate-300 uppercase">Total Pemasukan</div>
+                  <div class="text-base sm:text-lg font-black text-emerald-400">Rp 54.200.000</div>
+                </div>
+                <div class="bg-white/10 p-3.5 rounded-xl border border-white/10">
+                  <div class="text-[10px] text-slate-300 uppercase">Total Pengeluaran</div>
+                  <div class="text-base sm:text-lg font-black text-rose-400">Rp 15.550.000</div>
+                </div>
+                <div class="bg-white/10 p-3.5 rounded-xl border border-white/10">
+                  <div class="text-[10px] text-slate-300 uppercase">Sisa Kas Berjalan</div>
+                  <div class="text-base sm:text-lg font-black text-brand-yellow">Rp 38.650.000</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="lg:col-span-4 flex flex-col gap-3">
+              <button onclick="showPage('anggaran')" class="w-full py-3.5 bg-brand-yellow hover:bg-brand-yellowHover text-brand-navy font-black text-xs uppercase rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-magnifying-glass-dollar text-base"></i>
+                <span>Buka Detail Transparansi Anggaran</span>
+              </button>
+              <button onclick="downloadLPJSimulate()" class="w-full py-3 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl border border-white/20 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-file-pdf text-rose-400"></i> Unduh LPJ Keuangan (PDF)
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Berita & Pengumuman Terkini (Requirement 45-52) -->
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-brand-navy">Kabar & Warta Fiskal</span>
+            <h2 class="text-2xl sm:text-3xl font-black text-brand-navy mt-1">Berita & Informasi Terbaru</h2>
+            <p class="text-sm text-slate-600">Update regulasi pajak, pengumuman akademik, dan prestasi mahasiswa UIMANDIRI.</p>
+          </div>
+          <button onclick="showPage('berita')" class="inline-flex items-center gap-2 text-brand-navy font-bold text-sm hover:underline">
+            Kunjungi Arsip Berita <i class="fa-solid fa-arrow-right text-xs"></i>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {% for b in berita_list|slice:":3" %}
+          <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-lg transition flex flex-col justify-between">
+            <div>
+              <img src="{{ b.get_gambar }}" alt="{{ b.judul }}" class="w-full h-44 object-cover">
+              <div class="p-5">
+                <div class="flex items-center gap-2 text-xs text-slate-500 mb-2">
+                  <span class="bg-blue-100 text-blue-900 font-bold px-2 py-0.5 rounded text-[10px]">{{ b.kategori }}</span> &bull; <span>{{ b.tanggal|date:"d M Y" }}</span>
+                </div>
+                <h3 class="font-bold text-brand-navy hover:text-brand-yellowHover cursor-pointer text-base line-clamp-2">
+                  <a href="{% if b.slug %}{% url 'berita_detail' b.slug %}{% else %}{% url 'berita_detail_by_id' b.id %}{% endif %}">
+                    {{ b.judul }}
+                  </a>
+                </h3>
+                <p class="text-xs text-slate-600 mt-2 line-clamp-2">
+                  {{ b.ringkasan }}
+                </p>
+              </div>
+            </div>
+            <div class="p-5 pt-0">
+              <a href="{% if b.slug %}{% url 'berita_detail' b.slug %}{% else %}{% url 'berita_detail_by_id' b.id %}{% endif %}" class="mt-2 text-xs font-bold text-brand-navy flex items-center gap-1 hover:underline">
+                Baca Selengkapnya <i class="fa-solid fa-chevron-right text-[10px]"></i>
+              </a>
+            </div>
+          </div>
+          {% empty %}
+          <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-lg transition">
+            <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=700&q=80" alt="Coretax DJP" class="w-full h-44 object-cover">
+            <div class="p-5">
+              <div class="flex items-center gap-2 text-xs text-slate-500 mb-2">
+                <span class="bg-blue-100 text-blue-900 font-bold px-2 py-0.5 rounded text-[10px]">Regulasi</span> &bull; <span>14 Nov 2026</span>
+              </div>
+              <h3 class="font-bold text-brand-navy hover:text-brand-yellowHover cursor-pointer text-base line-clamp-2">
+                Persiapan Implementasi Coretax DJP: HIMA UIMANDIRI Gelar Bedah Fitur Baru untuk Mahasiswa
+              </h3>
+              <p class="text-xs text-slate-600 mt-2 line-clamp-2">
+                Edukasi mendalam mengenai simplifikasi 21 proses bisnis perpajakan, deposit pajak, dan integrasi NIK menjadi NPWP.
+              </p>
+              <button onclick="openModalNews('Persiapan Implementasi Coretax DJP', 'Humas &bull; 14 Nov 2026', 'Edukasi mendalam mengenai simplifikasi 21 proses bisnis perpajakan, deposit pajak, dan integrasi NIK menjadi NPWP untuk seluruh mahasiswa fiskal.', 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=700&q=80')" class="mt-4 text-xs font-bold text-brand-navy flex items-center gap-1 hover:underline">
+                Baca Selengkapnya <i class="fa-solid fa-chevron-right text-[10px]"></i>
+              </button>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
+{% endblock %}
+

@@ -1,16 +1,661 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}139JT{% endblock %}</title>
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'css/main.css' %}">
-    {% block extra_css %}{% endblock %}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{{ profile.nama_organisasi|default:"HIMA PERPAJAKAN UIMANDIRI" }} - {{ profile.tagline|default:"Integritas, Profesionalitas, dan Akuntabilitas" }}{% endblock %}</title>
+  
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              navy: '#002B5C',       // Navy DJP / Perpajakan
+              navyLight: '#083d7c',
+              navyDark: '#001b3b',
+              yellow: '#F5C400',     // Kuning Coretax
+              yellowHover: '#e0b300',
+              yellowLight: '#fff9e6'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      scroll-behavior: smooth;
+    }
+    .nav-link.active, .nav-link-top.active {
+      color: #F5C400 !important;
+      font-weight: 700;
+      position: relative;
+    }
+    .nav-link.active::after, .nav-link-top.active::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background-color: #F5C400;
+      border-radius: 9999px;
+    }
+    .nav-dropdown-item.active {
+      background-color: rgba(245, 196, 0, 0.15) !important;
+      color: #F5C400 !important;
+      font-weight: 700;
+    }
+    .mobile-nav-link.active {
+      background-color: #F5C400 !important;
+      color: #001b3b !important;
+      font-weight: 700 !important;
+    }
+    .mobile-nav-link.active i {
+      color: #001b3b !important;
+    }
+    .hero-pattern {
+      background-color: #002B5C;
+      background-image: radial-gradient(rgba(245, 196, 0, 0.15) 1px, transparent 1px), radial-gradient(rgba(255, 255, 255, 0.08) 1px, #002B5C 1px);
+      background-size: 40px 40px;
+      background-position: 0 0, 20px 20px;
+    }
+    /* Floating WhatsApp pulse */
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.6); }
+      50% { box-shadow: 0 0 0 14px rgba(37, 211, 102, 0); }
+    }
+    .wa-float-btn {
+      animation: pulseGlow 2.5s infinite;
+    }
+  </style>
+  {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen">
+  {% csrf_token %}
+
+  <!-- DYNAMIC NAVBAR -->
+  {% include 'components/navbar.html' %}
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="flex-grow">
     {% block content %}{% endblock %}
-    <script src="{% static 'js/main.js' %}"></script>
-    {% block extra_js %}{% endblock %}
+  </main>
+
+  <!-- FLOATING WHATSAPP BUTTON -->
+  <a href="https://wa.me/{{ profile.no_whatsapp|default:'6281298765432' }}?text=Halo%20Admin%20{{ profile.nama_organisasi|default:'HIMA Perpajakan'|urlencode }},%20saya%20ingin%20bertanya%20seputar%20kegiatan/organisasi" target="_blank" rel="noopener noreferrer" class="wa-float-btn fixed bottom-6 right-6 z-40 bg-emerald-500 hover:bg-emerald-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition duration-300 transform hover:scale-110" title="Hubungi Sekretariat via WhatsApp">
+    <i class="fa-brands fa-whatsapp text-3xl"></i>
+  </a>
+
+  <!-- MODAL: DETAIL MAHASISWA & STATUS -->
+  <div id="modal-member-detail" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl relative">
+      <button onclick="closeMemberDetailModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <!-- Header (Data Mahasiswa Bebas Foto Profil) -->
+      <div class="flex flex-col items-center text-center mb-4">
+        <img id="md-foto" src="" alt="" class="hidden">
+        <div class="w-16 h-16 rounded-2xl bg-brand-navy/5 text-brand-navy border border-slate-200 flex items-center justify-center text-2xl mb-3 shadow-inner">
+          <i id="md-icon" class="fa-solid fa-user-graduate text-brand-navy"></i>
+        </div>
+        <span id="md-status-badge" class="bg-emerald-100 text-emerald-800 text-[11px] font-bold px-3 py-0.5 rounded-full uppercase mb-1 inline-flex items-center gap-1.5">
+          <i class="fa-solid fa-circle-check"></i> Mahasiswa Aktif
+        </span>
+        <h3 id="md-name" class="text-lg font-black text-brand-navy mt-1">Nama Mahasiswa</h3>
+        <div id="md-job" class="text-xs font-semibold text-slate-500 mt-0.5">Program Studi Perpajakan</div>
+      </div>
+
+      <!-- Detail Info Mahasiswa -->
+      <div class="space-y-2 text-xs border-t border-slate-100 pt-4">
+        <div class="flex items-center gap-3 p-2.5 bg-slate-50 rounded-xl">
+          <i class="fa-solid fa-id-card w-4 text-brand-navy text-center"></i>
+          <div>
+            <div class="text-slate-400 text-[10px] font-bold uppercase">NIM & Angkatan</div>
+            <div id="md-nim" class="font-mono font-bold text-slate-700">-</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 p-2.5 bg-slate-50 rounded-xl">
+          <i class="fa-solid fa-graduation-cap w-4 text-brand-navy text-center"></i>
+          <div>
+            <div class="text-slate-400 text-[10px] font-bold uppercase">Program Studi / Status</div>
+            <div id="md-prodi-status" class="font-semibold text-slate-700">Perpajakan (Aktif)</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 p-2.5 bg-slate-50 rounded-xl" id="md-wa-row">
+          <i class="fa-brands fa-whatsapp w-4 text-emerald-500 text-center"></i>
+          <div>
+            <div class="text-slate-400 text-[10px] font-bold uppercase">WhatsApp</div>
+            <a id="md-wa" href="#" target="_blank" class="font-semibold text-slate-700 hover:text-emerald-600 transition">-</a>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 p-2.5 bg-slate-50 rounded-xl" id="md-email-row">
+          <i class="fa-solid fa-envelope w-4 text-blue-500 text-center"></i>
+          <div>
+            <div class="text-slate-400 text-[10px] font-bold uppercase">Email Kampus / Pribadi</div>
+            <a id="md-email" href="#" class="font-semibold text-slate-700 hover:text-blue-600 transition">-</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-slate-100 flex justify-end">
+        <button onclick="closeMemberDetailModal()" class="px-5 py-2 bg-brand-navy text-white text-xs font-bold rounded-xl hover:bg-brand-navyLight transition">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: DETAIL BUKTI KUITANSI ANGGARAN -->
+  <div id="modal-receipt" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
+      <button onclick="closeReceiptModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 uppercase">
+        <i class="fa-solid fa-shield-halved"></i> Bukti Transaksi Terverifikasi
+      </div>
+      <h3 id="rc-title" class="text-base font-black text-brand-navy mt-2">Uraian Transaksi</h3>
+      <div id="rc-amount" class="text-xl font-black text-brand-navy mt-1">Rp 0</div>
+      <div id="rc-date" class="text-xs text-slate-400 mt-0.5">Tanggal: -</div>
+
+      <div class="mt-4 p-4 rounded-xl bg-slate-100 border border-slate-200 text-center space-y-2">
+        <img id="rc-img" src="" class="max-h-56 mx-auto rounded-lg hidden object-contain border border-slate-200 cursor-pointer shadow-sm" onclick="window.open(this.src, '_blank')">
+        <i id="rc-icon" class="fa-solid fa-file-invoice text-4xl text-slate-400"></i>
+        <div id="rc-desc" class="text-xs text-slate-600 font-medium">Struk / Nota belanja asli tersimpan di arsip bendahara.</div>
+      </div>
+
+      <div class="mt-4 pt-2 flex justify-end">
+        <button onclick="closeReceiptModal()" class="px-4 py-2 bg-brand-navy text-white text-xs font-bold rounded-xl">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: FORMULIR ONLINE REGISTRASI -->
+  <div id="modal-form-simulation" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeFormSimulation()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <span class="bg-amber-100 text-amber-900 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase">Formulir Online HIMA</span>
+      <h3 id="form-sim-title" class="text-lg font-black text-brand-navy mt-2">Judul Formulir</h3>
+      <p class="text-xs text-slate-500 mt-1">Silakan lengkapi formulir pendaftaran di bawah ini. Data akan langsung terdata di database panitia.</p>
+
+      <form id="form-simulation-element" onsubmit="handleFormSimSubmit(event)" enctype="multipart/form-data" class="mt-5 space-y-4 text-xs">
+        <input type="hidden" id="form-sim-id" name="form_id" value="">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Nama Lengkap Sesuai KTM <span class="text-rose-500">*</span></label>
+          <input type="text" name="nama_lengkap" id="form-sim-name" required placeholder="Contoh: Rian Anggara" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-navy">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Nomor Induk Mahasiswa (NIM) <span class="text-rose-500">*</span></label>
+            <input type="text" name="nim" id="form-sim-nim" required placeholder="Contoh: 24141010045" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-navy font-mono">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Program Studi / Fakultas</label>
+            <input type="text" name="prodi_fakultas" id="form-sim-prodi" value="D4/S1 Perpajakan - FEB" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-navy">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Nomor WhatsApp Aktif <span class="text-rose-500">*</span></label>
+            <input type="text" name="no_whatsapp" id="form-sim-wa" required placeholder="08xxxxxxxxxx" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-navy">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Alamat Email Aktif <span class="text-rose-500">*</span></label>
+            <input type="email" name="email" id="form-sim-email" required placeholder="nama@student.uimandiri.ac.id" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-navy">
+          </div>
+        </div>
+
+        <!-- Dynamic Question Fields (Google Form style) -->
+        <div id="form-sim-dynamic-questions" class="space-y-3 pt-3 border-t border-slate-100">
+          <!-- Populated dynamically when form is opened -->
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Catatan / Motivasi Tambahan</label>
+          <textarea name="catatan" id="form-sim-note" rows="2" placeholder="Tuliskan keterangan tambahan Anda..." class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-navy"></textarea>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Lampiran Berkas / Bukti (Upload ke Cloudinary - Opsional)</label>
+          <input type="file" name="berkas" class="w-full text-slate-500 text-[11px] file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-100 file:font-semibold">
+        </div>
+
+        <button type="submit" id="btn-submit-form-sim" class="w-full py-3 bg-brand-navy hover:bg-brand-navyLight text-white font-bold rounded-xl shadow transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-paper-plane text-brand-yellow"></i>
+          <span>Kirim Formulir Pendaftaran</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: NEWS DETAIL -->
+  <div id="modal-news-detail" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeModalNews()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <span class="bg-amber-100 text-brand-navy text-[10px] font-bold px-2.5 py-0.5 rounded uppercase">Warta Fiskal UIMANDIRI</span>
+      <h3 id="news-modal-title" class="text-xl font-black text-brand-navy mt-2">Judul Berita</h3>
+      <div id="news-modal-meta" class="text-xs text-slate-400 mt-1 pb-3 border-b border-slate-100">Dipublikasikan oleh Humas & Media HIMA Perpajakan</div>
+
+      <img id="news-modal-img" src="" class="w-full max-h-64 object-cover rounded-2xl my-3 hidden border border-slate-200">
+
+      <div id="news-modal-content" class="mt-4 space-y-3 text-xs sm:text-sm text-slate-600 leading-relaxed">
+        <p>Konten berita selengkapnya.</p>
+      </div>
+
+      <div class="mt-6 pt-4 border-t border-slate-100 flex justify-end">
+        <button onclick="closeModalNews()" class="px-5 py-2 bg-brand-navy text-white text-xs font-bold rounded-xl hover:bg-brand-navyLight">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DYNAMIC FOOTER -->
+  {% include 'components/footer.html' %}
+
+  <!-- CORE JAVASCRIPT -->
+  <script>
+    // CSRF Token Helper
+    function getCsrfToken() {
+      const name = 'csrftoken';
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    function addCsrfToFormData(formData) {
+      const token = getCsrfToken();
+      if (token) formData.append('csrfmiddlewaretoken', token);
+      return formData;
+    }
+
+    // Smart showPage bridge for page navigation & backwards compatibility
+    const pageRouteMap = {
+      'beranda': "{% url 'home' %}",
+      'profil': "{% url 'profil' %}",
+      'struktur': "{% url 'struktur' %}",
+      'arsip': "{% url 'arsip' %}",
+      'anggota': "{% url 'anggota' %}",
+      'proker': "{% url 'proker' %}",
+      'anggaran': "{% url 'anggaran' %}",
+      'kas': "{% url 'anggaran' %}",
+      'formulir': "{% url 'formulir' %}",
+      'aspirasi': "{% url 'aspirasi' %}",
+      'berita': "{% url 'berita' %}",
+      'galeri': "{% url 'galeri' %}",
+      'kontak': "{% url 'kontak' %}"
+    };
+
+    function showPage(pageId) {
+      if (pageRouteMap[pageId]) {
+        if (window.location.pathname === pageRouteMap[pageId] || (pageId === 'beranda' && (window.location.pathname === '/' || window.location.pathname === '/index.html'))) {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          window.location.href = pageRouteMap[pageId];
+        }
+      }
+    }
+
+    // Mobile Menu Toggle
+    const mobileBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+
+    function toggleMobileMenu(forceClose = false) {
+      if (!mobileMenu) return;
+      const isHidden = mobileMenu.classList.contains('hidden');
+      const icon = mobileBtn ? mobileBtn.querySelector('i') : null;
+
+      if (forceClose || !isHidden) {
+        mobileMenu.classList.add('hidden');
+        if (icon) {
+          icon.classList.remove('fa-xmark');
+          icon.classList.add('fa-bars');
+        }
+      } else {
+        mobileMenu.classList.remove('hidden');
+        if (icon) {
+          icon.classList.remove('fa-bars');
+          icon.classList.add('fa-xmark');
+        }
+      }
+    }
+
+    if (mobileBtn) {
+      mobileBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleMobileMenu();
+      });
+    }
+
+    document.addEventListener('click', (e) => {
+      if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+        if (!mobileMenu.contains(e.target) && !mobileBtn.contains(e.target)) {
+          toggleMobileMenu(true);
+        }
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        toggleMobileMenu(true);
+      }
+    });
+
+    // Modals Handler: Member Detail
+    function openMemberDetailModal(name, job, div, nim, angkatan, email, wa, status, foto) {
+      document.getElementById('md-name').innerText = name;
+      document.getElementById('md-job').innerText = (job && job !== 'Anggota Divisi' && job !== 'Mahasiswa Perpajakan') ? (job + ' · ' + (div || 'Perpajakan')) : ('Program Studi Perpajakan' + (div && div !== 'Perpajakan' ? ' · ' + div : ''));
+      document.getElementById('md-nim').innerText = 'NIM: ' + nim + (angkatan ? ' · Angkatan ' + angkatan : '');
+      
+      const prodiStatusEl = document.getElementById('md-prodi-status');
+      if (prodiStatusEl) {
+        prodiStatusEl.innerText = 'Program Studi Perpajakan (' + (status === 'Alumni' ? 'Alumni' : 'Mahasiswa Aktif') + ')';
+      }
+
+      const badge = document.getElementById('md-status-badge');
+      const icon = document.getElementById('md-icon');
+      const isAlumni = (status === 'Alumni');
+      if (isAlumni) {
+        badge.className = 'text-[11px] font-bold px-3 py-0.5 rounded-full uppercase mb-1 bg-blue-100 text-blue-800 inline-flex items-center gap-1.5';
+        badge.innerHTML = '<i class="fa-solid fa-graduation-cap"></i> Alumni';
+        if (icon) icon.className = 'fa-solid fa-graduation-cap text-blue-600';
+      } else {
+        badge.className = 'text-[11px] font-bold px-3 py-0.5 rounded-full uppercase mb-1 bg-emerald-100 text-emerald-800 inline-flex items-center gap-1.5';
+        badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Mahasiswa Aktif';
+        if (icon) icon.className = 'fa-solid fa-user-graduate text-emerald-600';
+      }
+
+      const waRow = document.getElementById('md-wa-row');
+      const waEl = document.getElementById('md-wa');
+      if (wa && wa !== 'None' && wa.trim() !== '') {
+        const waClean = wa.replace(/[^0-9]/g, '');
+        waEl.href = 'https://wa.me/' + waClean;
+        waEl.innerText = wa;
+        waRow.style.display = '';
+      } else {
+        waRow.style.display = 'none';
+      }
+
+      const emailRow = document.getElementById('md-email-row');
+      const emailEl = document.getElementById('md-email');
+      if (email && email !== 'None' && email.trim() !== '') {
+        emailEl.href = 'mailto:' + email;
+        emailEl.innerText = email;
+        emailRow.style.display = '';
+      } else {
+        emailRow.style.display = 'none';
+      }
+
+      document.getElementById('modal-member-detail').classList.remove('hidden');
+    }
+    function closeMemberDetailModal() {
+      document.getElementById('modal-member-detail').classList.add('hidden');
+    }
+
+    // Modals Handler: Receipt
+    function viewReceiptModal(title, amount, date, desc, imgUrl) {
+      document.getElementById('rc-title').innerText = title;
+      document.getElementById('rc-amount').innerText = amount;
+      document.getElementById('rc-date').innerText = 'Tanggal Transaksi: ' + date;
+      document.getElementById('rc-desc').innerText = desc;
+      const img = document.getElementById('rc-img');
+      const icon = document.getElementById('rc-icon');
+      if (imgUrl) {
+        img.src = imgUrl;
+        img.classList.remove('hidden');
+        if (icon) icon.classList.add('hidden');
+      } else {
+        img.classList.add('hidden');
+        if (icon) icon.classList.remove('hidden');
+      }
+      document.getElementById('modal-receipt').classList.remove('hidden');
+    }
+    function closeReceiptModal() {
+      document.getElementById('modal-receipt').classList.add('hidden');
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Modals Handler: Form Simulation
+    let FORMULIR_PUBLIC_DATA = {};
+    {% if formulir_json_data %}
+    try {
+      FORMULIR_PUBLIC_DATA = {{ formulir_json_data|safe }};
+    } catch(e) {
+      console.warn("Could not parse formulir_json_data", e);
+    }
+    {% endif %}
+
+    function openFormSimulation(title, formId) {
+      document.getElementById('form-sim-title').innerText = title || 'Formulir Pendaftaran';
+
+      let formData = (formId && FORMULIR_PUBLIC_DATA) ? FORMULIR_PUBLIC_DATA[String(formId)] : null;
+      if (!formData && FORMULIR_PUBLIC_DATA) {
+        const keys = Object.keys(FORMULIR_PUBLIC_DATA);
+        if (keys.length > 0) {
+          if (title) {
+            const titleLower = title.toLowerCase();
+            for (const k of keys) {
+              const item = FORMULIR_PUBLIC_DATA[k];
+              if (item.judul && (titleLower.includes(item.judul.toLowerCase()) || item.judul.toLowerCase().includes(titleLower))) {
+                formData = item;
+                formId = item.id;
+                break;
+              }
+            }
+          }
+          if (!formData) {
+            formData = FORMULIR_PUBLIC_DATA[keys[0]];
+            formId = formData.id;
+          }
+        }
+      }
+
+      const formIdEl = document.getElementById('form-sim-id');
+      if (formIdEl) {
+        formIdEl.value = formId || '';
+      }
+
+      const dynamicContainer = document.getElementById('form-sim-dynamic-questions');
+      if (dynamicContainer) {
+        dynamicContainer.innerHTML = '';
+        const questions = formData && formData.pertanyaan ? formData.pertanyaan : [];
+
+        if (questions && questions.length > 0) {
+          const header = document.createElement('div');
+          header.className = 'flex items-center justify-between pb-1';
+          header.innerHTML = `
+            <span class="font-bold text-brand-navy text-xs flex items-center gap-1.5">
+              <i class="fa-solid fa-clipboard-question text-blue-600"></i> Kuesioner / Pertanyaan Pendaftaran
+            </span>
+            <span class="text-[10px] text-slate-400 font-mono">${questions.length} Butir Pertanyaan</span>
+          `;
+          dynamicContainer.appendChild(header);
+
+          questions.forEach((q, idx) => {
+            const wrap = document.createElement('div');
+            wrap.className = 'p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5 text-xs';
+            
+            const reqStar = q.required ? '<span class="text-rose-500 font-bold">*</span>' : '<span class="text-slate-400 font-normal">(Opsional)</span>';
+            const labelHtml = `<label class="block font-bold text-slate-800">${escapeHtml(q.label || ('Pertanyaan ' + (idx + 1)))} ${reqStar}</label>`;
+
+            let inputHtml = '';
+            const qName = q.id || ('q_' + idx);
+
+            if (q.tipe === 'textarea') {
+              inputHtml = `<textarea name="${qName}" rows="2" placeholder="Tuliskan jawaban Anda..." class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-brand-navy" ${q.required ? 'required' : ''}></textarea>`;
+            } else if (q.tipe === 'radio') {
+              const opts = (q.options || []).map((opt, oIdx) => `
+                <label class="flex items-center gap-2 font-medium text-slate-700 cursor-pointer">
+                  <input type="radio" name="${qName}" value="${escapeHtml(opt)}" class="text-blue-600 focus:ring-blue-500" ${oIdx === 0 && q.required ? 'required' : ''}>
+                  <span>${escapeHtml(opt)}</span>
+                </label>
+              `).join('');
+              inputHtml = `<div class="space-y-1 mt-1">${opts}</div>`;
+            } else if (q.tipe === 'checkbox') {
+              const opts = (q.options || []).map(opt => `
+                <label class="flex items-center gap-2 font-medium text-slate-700 cursor-pointer">
+                  <input type="checkbox" name="${qName}" value="${escapeHtml(opt)}" class="rounded text-blue-600 focus:ring-blue-500">
+                  <span>${escapeHtml(opt)}</span>
+                </label>
+              `).join('');
+              inputHtml = `<div class="space-y-1 mt-1">${opts}</div>`;
+            } else if (q.tipe === 'select') {
+              const opts = (q.options || []).map(opt => `<option value="${escapeHtml(opt)}">${escapeHtml(opt)}</option>`).join('');
+              inputHtml = `
+                <select name="${qName}" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-brand-navy" ${q.required ? 'required' : ''}>
+                  <option value="">-- Pilih Opsi --</option>
+                  ${opts}
+                </select>
+              `;
+            } else if (q.tipe === 'rating') {
+              inputHtml = `
+                <div class="flex items-center gap-3 py-1">
+                  ${[1, 2, 3, 4, 5].map(val => `
+                    <label class="flex flex-col items-center gap-1 cursor-pointer">
+                      <input type="radio" name="${qName}" value="${val}" ${val === 5 ? 'checked' : ''} class="text-amber-500 focus:ring-amber-400">
+                      <span class="text-[11px] font-bold text-slate-600">${val} ⭐</span>
+                    </label>
+                  `).join('')}
+                </div>
+              `;
+            } else {
+              inputHtml = `<input type="text" name="${qName}" placeholder="Jawaban singkat..." class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-brand-navy" ${q.required ? 'required' : ''}>`;
+            }
+
+            wrap.innerHTML = labelHtml + inputHtml;
+            dynamicContainer.appendChild(wrap);
+          });
+        }
+      }
+
+      document.getElementById('modal-form-simulation').classList.remove('hidden');
+    }
+
+    function closeFormSimulation() {
+      document.getElementById('modal-form-simulation').classList.add('hidden');
+    }
+
+    async function handleFormSimSubmit(e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+
+      const customAnswers = {};
+      const inputs = form.querySelectorAll('#form-sim-dynamic-questions input, #form-sim-dynamic-questions select, #form-sim-dynamic-questions textarea');
+      inputs.forEach(inp => {
+        if (!inp.name) return;
+        if (inp.type === 'radio' && !inp.checked) return;
+        if (inp.type === 'checkbox') {
+          if (inp.checked) {
+            if (!customAnswers[inp.name]) customAnswers[inp.name] = [];
+            customAnswers[inp.name].push(inp.value);
+          }
+          return;
+        }
+        customAnswers[inp.name] = inp.value;
+      });
+      formData.set('jawaban_json', JSON.stringify(customAnswers));
+
+      const btn = document.getElementById('btn-submit-form-sim');
+      const origText = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Menyimpan respon ke database...</span>';
+      btn.disabled = true;
+
+      try {
+        addCsrfToFormData(formData);
+        const res = await fetch('/api/formulir/submit/', {
+          method: 'POST',
+          body: formData,
+          headers: { 'X-CSRFToken': getCsrfToken() }
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+          alert('Berhasil! ' + data.message);
+          closeFormSimulation();
+          form.reset();
+        } else {
+          alert('Gagal: ' + (data.message || 'Terjadi kesalahan'));
+        }
+      } catch(err) {
+        alert('Terjadi kesalahan jaringan atau server.');
+      } finally {
+        btn.innerHTML = origText;
+        btn.disabled = false;
+      }
+    }
+
+    function openRegisterEventModal(eventName, formId) {
+      openFormSimulation('Pendaftaran: ' + eventName, formId);
+    }
+
+    // Modals Handler: News Detail
+    function openModalNews(title, meta, content, imgUrl) {
+      document.getElementById('news-modal-title').innerText = title || 'Warta Perpajakan';
+      if (meta) {
+        document.getElementById('news-modal-meta').innerHTML = meta;
+      }
+      if (content) {
+        document.getElementById('news-modal-content').innerHTML = '<p class="whitespace-pre-line leading-relaxed">' + content + '</p>';
+      } else {
+        document.getElementById('news-modal-content').innerHTML = '<p>Informasi selengkapnya mengenai warta ini dapat dikonfirmasi langsung ke sekretariat HIMA Perpajakan UIMANDIRI.</p>';
+      }
+      const imgEl = document.getElementById('news-modal-img');
+      if (imgUrl) {
+        imgEl.src = imgUrl;
+        imgEl.classList.remove('hidden');
+      } else {
+        imgEl.classList.add('hidden');
+      }
+      document.getElementById('modal-news-detail').classList.remove('hidden');
+    }
+    function closeModalNews() {
+      document.getElementById('modal-news-detail').classList.add('hidden');
+    }
+
+    function openImageModal(el) {
+      const img = el.querySelector('img');
+      if (img) window.open(img.src, '_blank');
+    }
+  </script>
+  {% block extra_js %}{% endblock %}
 </body>
 </html>

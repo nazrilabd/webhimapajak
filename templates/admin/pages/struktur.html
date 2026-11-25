@@ -1,0 +1,307 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Kelola Struktur Kepengurusan Aktif - HIMA PERPAJAKAN UIMANDIRI{% endblock %}
+
+{% block page_heading %}Kelola Struktur Kepengurusan Aktif{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-black text-brand-navy">Kelola Struktur Kepengurusan</h2>
+            <p class="text-xs text-slate-400">Atur pimpinan kabinet, foto profil pengurus, bio tugas, dan periode kepengurusan terkait.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Filter by Periode Dropdown -->
+            <select id="filter-str-periode" onchange="filterStrukturByPeriod(this.value)" class="text-xs font-bold px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-brand-navy focus:outline-none">
+              <option value="all">Semua Periode Kepengurusan</option>
+              {% for ar in arsip_list %}
+              <option value="{{ ar.id }}" {% if ar.aktif %}selected{% endif %}>Periode {{ ar.tahun_periode }} ({{ ar.nama_kabinet }})</option>
+              {% endfor %}
+            </select>
+            <button onclick="openManageDivisiModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+              <i class="fa-solid fa-layer-group"></i> Kelola Divisi
+            </button>
+            <button onclick="openAddStrukturModal()" class="bg-brand-yellow hover:bg-brand-yellowHover text-brand-navy font-black text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+              <i class="fa-solid fa-user-plus"></i> Tambah Pengurus Struktur
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4" id="struktur-grid">
+          {% for s in struktur_list %}
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3 text-center struktur-item" id="struktur-card-{{ s.id }}" data-periode-id="{{ s.periode_id|default:'' }}">
+            <div class="relative w-20 h-20 mx-auto">
+              <img src="{{ s.get_foto }}" class="w-20 h-20 rounded-2xl object-cover mx-auto border-2 border-brand-yellow shadow" id="str-foto-img-{{ s.id }}">
+              {% if s.periode %}
+              <span class="absolute -bottom-2 -right-2 bg-brand-navy text-brand-yellow text-[9px] font-black px-1.5 py-0.5 rounded shadow">
+                {{ s.periode.tahun_periode }}
+              </span>
+              {% endif %}
+            </div>
+            <div>
+              <div class="text-[10px] font-bold text-amber-800 uppercase" id="str-divisi-{{ s.id }}">{{ s.divisi }}</div>
+              <h4 class="font-bold text-sm text-brand-navy mt-0.5" id="str-nama-{{ s.id }}">{{ s.nama }}</h4>
+              <p class="text-xs text-slate-500 font-semibold" id="str-jabatan-{{ s.id }}">{{ s.jabatan }}</p>
+              <p class="text-[10px] text-slate-400 font-mono mt-0.5">NIM: <span id="str-nim-{{ s.id }}">{{ s.nim }}</span></p>
+              <div class="mt-1">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600" id="str-periode-badge-{{ s.id }}">
+                  {{ s.periode.tahun_periode|default:"Periode Belum Ditentukan" }}
+                </span>
+              </div>
+            </div>
+            <p class="text-[11px] text-slate-500 line-clamp-2 italic" id="str-bio-{{ s.id }}">{{ s.bio }}</p>
+            <div class="pt-2 border-t border-slate-100 flex items-center justify-center gap-2">
+              <button onclick="openEditStrukturModal({{ s.id }}, '{{ s.nama|escapejs }}', '{{ s.nim|escapejs }}', '{{ s.divisi|escapejs }}', '{{ s.jabatan|escapejs }}', {{ s.urutan }}, '{{ s.bio|escapejs }}', '{{ s.periode_id|default:'' }}')" class="flex-1 text-blue-600 hover:text-blue-800 text-xs font-bold py-1 px-2 rounded-lg bg-blue-50 transition flex items-center justify-center gap-1">
+                <i class="fa-solid fa-pen-to-square"></i> Edit
+              </button>
+              <button onclick="deleteStruktur({{ s.id }})" class="flex-1 text-rose-500 hover:text-rose-700 text-xs font-bold py-1 px-2 rounded-lg bg-rose-50 transition flex items-center justify-center gap-1">
+                <i class="fa-solid fa-trash-can"></i> Hapus
+              </button>
+            </div>
+          </div>
+          {% empty %}
+          <div class="col-span-4 text-center py-8 text-slate-400 bg-white rounded-2xl border border-slate-200">
+            Belum ada struktur kepengurusan.
+          </div>
+          {% endfor %}
+        </div>
+
+      </div>
+
+      <!-- ==================== TAB 7: ARSIP PERIODE KEPENGURUSAN ==================== -->
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- MODAL: ADD STRUKTUR -->
+  <div id="modal-add-struktur" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeAddStrukturModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl"><i class="fa-solid fa-xmark"></i></button>
+      <h3 class="text-base font-black text-brand-navy">Tambah Pengurus Struktur</h3>
+      <p class="text-xs text-slate-400 mt-0.5">Pilih periode kepengurusan dan upload foto pengurus ke Cloudinary.</p>
+      <form onsubmit="handleAddStrukturSubmit(event)" enctype="multipart/form-data" class="mt-4 space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Periode Kepengurusan</label>
+          <select id="str-periode" class="w-full px-3 py-2 border rounded-lg font-bold text-brand-navy">
+            {% for ar in arsip_list %}
+            <option value="{{ ar.id }}" {% if ar.aktif %}selected{% endif %}>Periode {{ ar.tahun_periode }} ({{ ar.nama_kabinet }}){% if ar.aktif %} - Aktif{% endif %}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Nama Lengkap</label>
+          <input type="text" id="str-nama" required class="w-full px-3 py-2 border rounded-lg">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">NIM</label>
+            <input type="text" id="str-nim" required class="w-full px-3 py-2 border rounded-lg font-mono">
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block font-bold text-slate-600">Divisi</label>
+              <button type="button" onclick="openManageDivisiModal()" class="text-[10px] text-indigo-700 hover:underline font-bold">+ Divisi</button>
+            </div>
+            <select id="str-divisi" class="w-full px-3 py-2 border rounded-lg">
+              {% for d in divisi_list %}
+              <option value="{{ d.kode }}">{{ d.nama }}</option>
+              {% empty %}
+              <option value="BPH">Badan Pengurus Harian (BPH)</option>
+              <option value="Diklat">Divisi Pelatihan & Brevet</option>
+              <option value="Kajian">Divisi Kajian & Riset Fiskal</option>
+              <option value="Humas">Divisi Humas & Tax Center</option>
+              <option value="Media">Divisi Media Kreatif & IT</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Jabatan Struktural</label>
+          <input type="text" id="str-jabatan" required placeholder="Contoh: Kepala Divisi Diklat" class="w-full px-3 py-2 border rounded-lg">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Bio / Tugas Singkat</label>
+          <textarea id="str-bio" rows="2" class="w-full px-3 py-2 border rounded-lg"></textarea>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Foto Profil (Cloudinary)</label>
+          <input type="file" id="str-foto" accept="image/*" class="w-full text-slate-500 text-[11px]">
+        </div>
+        <button type="submit" id="btn-save-str" class="w-full py-2 bg-brand-navy text-white font-bold rounded-lg mt-2">Simpan Struktur</button>
+      </form>
+    </div>
+  </div>
+
+
+
+  <!-- MODAL: EDIT STRUKTUR -->
+  <div id="modal-edit-struktur" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeEditStrukturModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl"><i class="fa-solid fa-xmark"></i></button>
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl overflow-hidden border-2 border-brand-yellow">
+          <img id="edit-str-foto-preview" src="" class="w-full h-full object-cover">
+        </div>
+        <div>
+          <h3 class="text-base font-black text-brand-navy">Edit Pengurus Struktur</h3>
+          <p class="text-xs text-slate-400">Perbarui jabatan, penempatan periode, dan bio tugas.</p>
+        </div>
+      </div>
+      <form onsubmit="handleEditStrukturSubmit(event)" enctype="multipart/form-data" class="mt-4 space-y-3 text-xs">
+        <input type="hidden" id="edit-str-id">
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Periode Kepengurusan</label>
+          <select id="edit-str-periode" class="w-full px-3 py-2 border rounded-lg font-bold text-brand-navy">
+            {% for ar in arsip_list %}
+            <option value="{{ ar.id }}">Periode {{ ar.tahun_periode }} ({{ ar.nama_kabinet }}){% if ar.aktif %} - Aktif{% endif %}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Nama Lengkap</label>
+          <input type="text" id="edit-str-nama" required class="w-full px-3 py-2 border rounded-lg">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">NIM</label>
+            <input type="text" id="edit-str-nim" required class="w-full px-3 py-2 border rounded-lg font-mono">
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block font-bold text-slate-600">Divisi</label>
+              <button type="button" onclick="openManageDivisiModal()" class="text-[10px] text-indigo-700 hover:underline font-bold">+ Divisi</button>
+            </div>
+            <select id="edit-str-divisi" class="w-full px-3 py-2 border rounded-lg">
+              {% for d in divisi_list %}
+              <option value="{{ d.kode }}">{{ d.nama }}</option>
+              {% empty %}
+              <option value="BPH">Badan Pengurus Harian (BPH)</option>
+              <option value="Diklat">Divisi Pelatihan & Brevet</option>
+              <option value="Kajian">Divisi Kajian & Riset Fiskal</option>
+              <option value="Humas">Divisi Humas & Tax Center</option>
+              <option value="Media">Divisi Media Kreatif & IT</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Jabatan Struktural</label>
+            <input type="text" id="edit-str-jabatan" required class="w-full px-3 py-2 border rounded-lg">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Urutan Tampil</label>
+            <input type="number" id="edit-str-urutan" value="0" class="w-full px-3 py-2 border rounded-lg">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Bio / Tugas Singkat</label>
+          <textarea id="edit-str-bio" rows="2" class="w-full px-3 py-2 border rounded-lg"></textarea>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Ganti Foto Profil (opsional)</label>
+          <input type="file" id="edit-str-foto" accept="image/*" class="w-full text-slate-500 text-[11px]">
+        </div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeEditStrukturModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg font-semibold">Batal</button>
+          <button type="submit" id="btn-update-str" class="px-5 py-2 bg-brand-navy hover:bg-brand-navyLight text-white font-black rounded-lg">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+
+  <!-- MODAL: KELOLA DIVISI STRUKTUR CRUD -->
+  <div id="modal-manage-divisi" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl relative max-h-[90vh] flex flex-col">
+      <button onclick="closeManageDivisiModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="flex items-center gap-2 mb-1">
+        <span class="bg-indigo-100 text-indigo-900 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase flex items-center gap-1">
+          <i class="fa-solid fa-layer-group"></i> Divisi Struktur
+        </span>
+      </div>
+      <h3 class="text-lg font-black text-brand-navy">Kelola Divisi Struktur Pengurus</h3>
+      <p class="text-xs text-slate-400">Tambah, ubah, atau hapus divisi/departemen kepengurusan HIMA.</p>
+
+      <!-- Form Tambah / Edit Divisi -->
+      <form onsubmit="handleSaveDivisi(event)" class="mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3 text-xs">
+        <input type="hidden" id="div-id" value="">
+        <div class="flex items-center justify-between">
+          <span id="div-mode-title" class="font-bold text-brand-navy flex items-center gap-1.5">
+            <i class="fa-solid fa-plus-circle text-indigo-600"></i> Tambah Divisi Baru
+          </span>
+          <button type="button" id="btn-cancel-edit-div" onclick="resetDivisiForm()" class="text-[11px] text-slate-500 hover:text-slate-700 hidden">
+            <i class="fa-solid fa-rotate-left"></i> Batal Edit
+          </button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Kode / Singkatan <span class="text-rose-500">*</span></label>
+            <input type="text" id="div-kode" required placeholder="Contoh: DIKLAT" class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-indigo-600 uppercase font-mono">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Nama Lengkap Divisi <span class="text-rose-500">*</span></label>
+            <input type="text" id="div-nama" required placeholder="Divisi Pelatihan & Brevet" class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-indigo-600">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Urutan</label>
+            <input type="number" id="div-urutan" value="0" min="0" class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-indigo-600 font-mono">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Deskripsi Tugas / Fungsi (Opsional)</label>
+          <input type="text" id="div-deskripsi" placeholder="Tanggung jawab dan program divisi..." class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-indigo-600">
+        </div>
+        <div class="flex justify-end gap-2 pt-1">
+          <button type="submit" id="btn-save-divisi" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition flex items-center gap-1.5">
+            <i class="fa-solid fa-check"></i> Simpan Divisi
+          </button>
+        </div>
+      </form>
+
+      <!-- Daftar Divisi Tabel -->
+      <div class="mt-4 flex-1 overflow-y-auto border border-slate-100 rounded-2xl">
+        <table class="w-full text-left text-xs text-slate-700">
+          <thead class="bg-slate-50 text-slate-400 font-bold uppercase text-[10px] border-b border-slate-100 sticky top-0">
+            <tr>
+              <th class="py-2.5 px-3">Kode</th>
+              <th class="py-2.5 px-3">Nama Divisi</th>
+              <th class="py-2.5 px-3">Deskripsi</th>
+              <th class="py-2.5 px-3 text-center">Urutan</th>
+              <th class="py-2.5 px-3 text-center">Pengurus</th>
+              <th class="py-2.5 px-3 text-center">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="divisi-table-body" class="divide-y divide-slate-100">
+            {% for d in divisi_list %}
+            <tr id="div-row-{{ d.id }}" class="hover:bg-slate-50">
+              <td class="py-2.5 px-3 font-mono font-bold text-indigo-700 uppercase">{{ d.kode }}</td>
+              <td class="py-2.5 px-3 font-bold text-brand-navy">{{ d.nama }}</td>
+              <td class="py-2.5 px-3 text-slate-500 max-w-xs truncate">{{ d.deskripsi|default:"-" }}</td>
+              <td class="py-2.5 px-3 text-center font-mono text-slate-400">{{ d.urutan }}</td>
+              <td class="py-2.5 px-3 text-center font-mono font-bold text-brand-navy">{{ d.total_pengurus|default:0 }}</td>
+              <td class="py-2.5 px-3 text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                  <button type="button" onclick="editDivisi({{ d.id }})" class="p-1 text-blue-600 hover:bg-blue-50 rounded" title="Edit">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                  <button type="button" onclick="deleteDivisi({{ d.id }})" class="p-1 text-rose-600 hover:bg-rose-50 rounded" title="Hapus">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="py-4 text-center text-slate-400">Belum ada divisi struktur.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}

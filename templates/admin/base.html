@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{{ page_title|default:"Admin Panel" }} - HIMA PERPAJAKAN UIMANDIRI{% endblock %}</title>
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              navy: '#002B5C',
+              navyLight: '#083d7c',
+              navyDark: '#001b3b',
+              yellow: '#F5C400',
+              yellowHover: '#e0b300',
+              yellowLight: '#fff9e6'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .sidebar-link.active {
+      background-color: #F5C400 !important;
+      color: #001b3b !important;
+      font-weight: 800;
+    }
+    .sidebar-link.active i {
+      color: #001b3b !important;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-slate-100 text-slate-800 flex h-screen overflow-hidden">
+  {% csrf_token %}
+
+  <!-- Mobile Backdrop Overlay -->
+  <div id="sidebar-backdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 hidden md:hidden transition-opacity duration-300"></div>
+
+  <!-- Responsive Sidebar -->
+  {% include 'admin/components/sidebar.html' %}
+
+  <!-- Main Content Wrapper -->
+  <div class="flex-1 flex flex-col h-screen min-w-0 overflow-hidden">
+    <!-- Top Header -->
+    {% include 'admin/components/header.html' %}
+
+    <!-- Scrollable Content Area -->
+    <main class="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 space-y-6 pb-24 md:pb-8">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <!-- Mobile Bottom Quick Navigation Bar -->
+  {% include 'admin/components/mobile_nav.html' %}
+
+  <!-- Modals Container -->
+  {% block modals %}{% endblock %}
+
+  <!-- Toast Notification Box -->
+  <div id="toast-box" class="fixed bottom-20 md:bottom-6 right-4 sm:right-6 max-w-sm bg-brand-navy text-white p-4 rounded-2xl shadow-2xl border border-brand-yellow/30 flex items-start gap-3 transform translate-x-96 opacity-0 transition-all duration-300 z-50">
+    <div class="w-8 h-8 rounded-xl bg-brand-yellow text-brand-navy flex items-center justify-center font-bold text-sm flex-shrink-0">
+      <i class="fa-solid fa-bell"></i>
+    </div>
+    <div>
+      <h5 id="toast-title" class="font-bold text-xs text-brand-yellow">Pemberitahuan</h5>
+      <p id="toast-msg" class="text-[11px] text-slate-300 mt-0.5">Sistem siap.</p>
+    </div>
+  </div>
+
+  <!-- Core JavaScript -->
+  <script src="/static/js/admin.js"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

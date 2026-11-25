@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+
+{% block title %}Data Mahasiswa Seluruh Pajak - {{ profile.nama_organisasi|default:"HIMA PERPAJAKAN UIMANDIRI" }}{% endblock %}
+
+{% block content %}
+      <div class="bg-brand-navy text-white py-14">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/10 text-brand-yellow rounded-full text-xs font-bold uppercase tracking-wider mb-2">
+            <i class="fa-solid fa-building-columns"></i> Direktori Kemahasiswaan & Alumni
+          </div>
+          <h1 class="text-3xl sm:text-4xl font-black mt-1">Data Mahasiswa Seluruh Pajak</h1>
+          <p class="text-slate-300 text-sm mt-2 max-w-2xl">Direktori resmi database seluruh mahasiswa Program Studi Perpajakan UIMANDIRI, memuat data mahasiswa aktif serta rekam jejak alumni secara komprehensif.</p>
+          
+          <!-- Quick Status Counter Badges -->
+          <div class="flex flex-wrap gap-3 mt-6">
+            <div class="bg-white/10 backdrop-blur-sm border border-white/15 px-4 py-2.5 rounded-2xl flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-amber-400/20 text-brand-yellow flex items-center justify-center text-lg font-bold">
+                <i class="fa-solid fa-users"></i>
+              </div>
+              <div>
+                <div class="text-[10px] text-slate-300 uppercase font-semibold">Total Mahasiswa Terdata</div>
+                <div class="text-lg font-black text-white">{{ total_mahasiswa }}</div>
+              </div>
+            </div>
+
+            <div class="bg-white/10 backdrop-blur-sm border border-white/15 px-4 py-2.5 rounded-2xl flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg font-bold">
+                <i class="fa-solid fa-user-check"></i>
+              </div>
+              <div>
+                <div class="text-[10px] text-slate-300 uppercase font-semibold">Mahasiswa Aktif</div>
+                <div class="text-lg font-black text-emerald-400">{{ total_mahasiswa_aktif }}</div>
+              </div>
+            </div>
+
+            <div class="bg-white/10 backdrop-blur-sm border border-white/15 px-4 py-2.5 rounded-2xl flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center text-lg font-bold">
+                <i class="fa-solid fa-graduation-cap"></i>
+              </div>
+              <div>
+                <div class="text-[10px] text-slate-300 uppercase font-semibold">Alumni Perpajakan</div>
+                <div class="text-lg font-black text-blue-400">{{ total_alumni }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+        
+        <!-- Search & Filter Bar (Status Mahasiswa Aktif vs Alumni) -->
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div class="relative w-full md:w-96">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+            <input type="text" id="member-search" placeholder="Cari nama mahasiswa, NIM, atau angkatan..." onkeyup="filterMembers()" class="w-full pl-10 pr-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-navy transition">
+          </div>
+
+          <!-- Status Filter Buttons -->
+          <div class="flex flex-wrap gap-2 w-full md:w-auto">
+            <button onclick="setMemberFilter('all')" class="member-filter-btn px-4 py-2 rounded-xl text-xs font-bold bg-brand-navy text-white shadow-sm transition" data-filter="all">
+              Semua Mahasiswa ({{ total_mahasiswa }})
+            </button>
+            <button onclick="setMemberFilter('Aktif')" class="member-filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition" data-filter="Aktif">
+              <i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i> Mahasiswa Aktif ({{ total_mahasiswa_aktif }})
+            </button>
+            <button onclick="setMemberFilter('Alumni')" class="member-filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition" data-filter="Alumni">
+              <i class="fa-solid fa-graduation-cap text-blue-500 mr-1"></i> Alumni Pajak ({{ total_alumni }})
+            </button>
+          </div>
+        </div>
+
+        <!-- Table View: Data Mahasiswa (Tanpa Foto Profil) -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-50 uppercase font-bold text-slate-500 border-b border-slate-200">
+                <tr>
+                  <th class="py-3.5 px-4 w-12 text-center">No</th>
+                  <th class="py-3.5 px-4">NIM</th>
+                  <th class="py-3.5 px-4">Nama Lengkap Mahasiswa</th>
+                  <th class="py-3.5 px-4">Angkatan</th>
+                  <th class="py-3.5 px-4">Program Studi & Keterangan</th>
+                  <th class="py-3.5 px-4">Status</th>
+                  <th class="py-3.5 px-4 text-center">Tindakan</th>
+                </tr>
+              </thead>
+              <tbody id="member-table-body" class="divide-y divide-slate-100">
+              {% for m in mahasiswa_list %}
+                <tr class="member-row hover:bg-slate-50/80 transition" data-status="{{ m.status }}" data-angkatan="{{ m.angkatan }}" data-divisi="{{ m.divisi }}" data-name="{{ m.nama|lower }}" data-nim="{{ m.nim|lower }}">
+                  <td class="py-3.5 px-4 text-center font-mono text-slate-400 font-semibold">{{ forloop.counter }}</td>
+                  <td class="py-3.5 px-4 font-mono font-bold text-brand-navy">
+                    <span class="bg-slate-100 px-2 py-1 rounded-md">{{ m.nim }}</span>
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <div class="font-bold text-slate-900 text-sm">{{ m.nama }}</div>
+                    {% if m.email %}<div class="text-[11px] text-slate-400">{{ m.email }}</div>{% endif %}
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200/60">
+                      {{ m.angkatan }}
+                    </span>
+                  </td>
+                  <td class="py-3.5 px-4 text-slate-600 font-medium">
+                    <div class="font-semibold text-slate-700">Prodi Perpajakan</div>
+                    <div class="text-[11px] text-slate-400">
+                      {% if m.jabatan and m.jabatan != 'Anggota Divisi' and m.jabatan != 'Mahasiswa Perpajakan' %}
+                        {{ m.jabatan }} &bull; Divisi {{ m.divisi }}
+                      {% else %}
+                        Konsentrasi Fiskal & Pajak
+                      {% endif %}
+                    </div>
+                  </td>
+                  <td class="py-3.5 px-4">
+                    {% if m.status == 'Alumni' %}
+                      <span class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full font-bold text-[11px]">
+                        <i class="fa-solid fa-graduation-cap text-blue-500"></i> Alumni
+                      </span>
+                    {% else %}
+                      <span class="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1 rounded-full font-bold text-[11px]">
+                        <i class="fa-solid fa-circle-check text-emerald-500"></i> Mahasiswa Aktif
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td class="py-3.5 px-4 text-center">
+                    <button onclick="openMemberDetailModal('{{ m.nama|escapejs }}', '{{ m.jabatan|escapejs }}', '{{ m.divisi|escapejs }}', '{{ m.nim|escapejs }}', '{{ m.angkatan|escapejs }}', '{{ m.email|escapejs }}', '{{ m.no_whatsapp|escapejs }}', '{{ m.status|escapejs }}')" class="px-3.5 py-1.5 bg-brand-navy/5 hover:bg-brand-navy hover:text-white text-brand-navy font-bold rounded-xl transition text-xs inline-flex items-center gap-1.5">
+                      <i class="fa-solid fa-circle-info"></i> Detail
+                    </button>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="7" class="py-8 text-center text-slate-400">
+                    <i class="fa-solid fa-folder-open text-3xl mb-2 block"></i>
+                    Belum ada data mahasiswa terdaftar.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="p-3.5 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-2">
+            <span>Menampilkan data mahasiswa Program Studi Perpajakan UIMANDIRI</span>
+            <div class="flex items-center gap-3">
+              <span class="text-brand-navy font-bold"><i class="fa-solid fa-database text-brand-yellow"></i> <span id="member-visible-count">{{ total_mahasiswa }}</span> Terdata</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+{% endblock %}
+{% block extra_js %}
+<script>
+  let currentMemberStatus = 'all';
+  function setMemberFilter(status) {
+    currentMemberStatus = status;
+    document.querySelectorAll('.member-filter-btn').forEach(btn => {
+      if (btn.getAttribute('data-filter') === status) {
+        btn.className = 'member-filter-btn px-4 py-2 rounded-xl text-xs font-bold bg-brand-navy text-white shadow-sm transition';
+      } else {
+        btn.className = 'member-filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
+      }
+    });
+    filterMembers();
+  }
+
+  function filterMembers() {
+    const query = (document.getElementById('member-search').value || '').toLowerCase().trim();
+    const rows = document.querySelectorAll('.member-row');
+    let visibleCount = 0;
+    rows.forEach(row => {
+      const name = (row.getAttribute('data-name') || '').toLowerCase();
+      const nim = (row.getAttribute('data-nim') || '').toLowerCase();
+      const angkatan = (row.getAttribute('data-angkatan') || '').toLowerCase();
+      const divisi = (row.getAttribute('data-divisi') || '').toLowerCase();
+      const status = row.getAttribute('data-status') || '';
+      
+      let matchStatus = false;
+      if (currentMemberStatus === 'all') {
+        matchStatus = true;
+      } else if (currentMemberStatus === 'Aktif') {
+        matchStatus = (status !== 'Alumni');
+      } else if (currentMemberStatus === 'Alumni') {
+        matchStatus = (status === 'Alumni');
+      }
+
+      const matchQuery = (!query || name.includes(query) || nim.includes(query) || angkatan.includes(query) || divisi.includes(query));
+      if (matchStatus && matchQuery) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+    const countEl = document.getElementById('member-visible-count');
+    if (countEl) countEl.innerText = visibleCount;
+  }
+</script>
+{% endblock %}

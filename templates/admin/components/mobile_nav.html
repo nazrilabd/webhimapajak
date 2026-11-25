@@ -1,0 +1,28 @@
+<!-- Mobile Bottom Navigation Bar (Phone Screens < 768px) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 py-1.5 flex items-center justify-around shadow-2xl">
+  <a href="{% url 'admin_dashboard' %}" class="flex flex-col items-center justify-center py-1 px-2 rounded-lg {% if active_menu == 'dashboard' %}text-brand-navy font-bold{% else %}text-slate-500 hover:text-slate-800{% endif %}">
+    <i class="fa-solid fa-chart-pie text-base"></i>
+    <span class="text-[9px] mt-0.5">Dashboard</span>
+  </a>
+  <a href="{% url 'admin_anggaran' %}" class="flex flex-col items-center justify-center py-1 px-2 rounded-lg {% if active_menu == 'anggaran' %}text-brand-navy font-bold{% else %}text-slate-500 hover:text-slate-800{% endif %}">
+    <i class="fa-solid fa-coins text-base"></i>
+    <span class="text-[9px] mt-0.5">Buku Kas</span>
+  </a>
+  <a href="{% url 'admin_formulir' %}" class="flex flex-col items-center justify-center py-1 px-2 rounded-lg {% if active_menu == 'formulir' %}text-brand-navy font-bold{% else %}text-slate-500 hover:text-slate-800{% endif %}">
+    <i class="fa-solid fa-wand-magic-sparkles text-base"></i>
+    <span class="text-[9px] mt-0.5">Formulir</span>
+  </a>
+  <a href="{% url 'admin_aspirasi' %}" class="flex flex-col items-center justify-center py-1 px-2 rounded-lg relative {% if active_menu == 'aspirasi' %}text-brand-navy font-bold{% else %}text-slate-500 hover:text-slate-800{% endif %}">
+    <i class="fa-solid fa-comment-dots text-base"></i>
+    <span class="text-[9px] mt-0.5">Aspirasi</span>
+    {% if kpi.aspirasi_pending > 0 %}
+    <span class="absolute top-0 right-1 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white"></span>
+    {% endif %}
+  </a>
+  <button type="button" onclick="toggleMobileSidebar()" class="flex flex-col items-center justify-center py-1 px-2 rounded-lg text-slate-700 hover:text-brand-navy">
+    <div class="w-6 h-6 rounded-md bg-brand-navy text-brand-yellow flex items-center justify-center">
+      <i class="fa-solid fa-bars text-xs"></i>
+    </div>
+    <span class="text-[9px] mt-0.5 font-bold">Semua</span>
+  </button>
+</nav>

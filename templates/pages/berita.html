@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Berita & Pengumuman - {{ profile.nama_organisasi|default:"HIMA PERPAJAKAN UIMANDIRI" }}{% endblock %}
+
+{% block content %}
+      <div class="bg-brand-navy text-white py-14">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-xs text-brand-yellow uppercase tracking-widest font-bold">Warta Organisasi</div>
+          <h1 class="text-3xl sm:text-4xl font-black mt-1">Berita & Pengumuman Perpajakan</h1>
+          <p class="text-slate-300 text-sm mt-2 max-w-2xl">Publikasi siaran pers, artikel analisis kebijakan fiskal, dan informasi resmi program studi.</p>
+        </div>
+      </div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {% for b in berita_list %}
+          <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-lg transition flex flex-col justify-between">
+            <div>
+              <img src="{{ b.get_gambar }}" alt="{{ b.judul }}" class="w-full h-48 object-cover">
+              <div class="p-5">
+                <div class="flex items-center gap-2 text-xs text-slate-400 mb-2">
+                  <span class="bg-blue-100 text-blue-900 font-bold px-2 py-0.5 rounded text-[10px]">{{ b.kategori }}</span>
+                  <span>{{ b.tanggal|date:"d M Y" }}</span>
+                </div>
+                <h3 class="font-bold text-brand-navy hover:text-brand-yellowHover text-base">
+                  <a href="{% if b.slug %}{% url 'berita_detail' b.slug %}{% else %}{% url 'berita_detail_by_id' b.id %}{% endif %}">
+                    {{ b.judul }}
+                  </a>
+                </h3>
+                <p class="text-xs text-slate-600 mt-2 line-clamp-3">
+                  {{ b.ringkasan }}
+                </p>
+              </div>
+            </div>
+            <div class="p-5 pt-0">
+              <a href="{% if b.slug %}{% url 'berita_detail' b.slug %}{% else %}{% url 'berita_detail_by_id' b.id %}{% endif %}" class="w-full inline-block text-center py-2 bg-slate-100 hover:bg-brand-yellow hover:text-brand-navy rounded-xl text-xs font-bold text-slate-700 transition">
+                Baca Selengkapnya
+              </a>
+            </div>
+          </div>
+          {% empty %}
+          <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-lg transition flex flex-col justify-between">
+            <div>
+              <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=700&q=80" class="w-full h-48 object-cover">
+              <div class="p-5">
+                <div class="flex items-center gap-2 text-xs text-slate-400 mb-2">
+                  <span class="bg-blue-100 text-blue-900 font-bold px-2 py-0.5 rounded text-[10px]">Coretax DJP</span>
+                  <span>14 Nov 2026</span>
+                </div>
+                <h3 class="font-bold text-brand-navy text-base">Persiapan Implementasi Coretax DJP: HIMA UIMANDIRI Gelar Bedah Fitur</h3>
+                <p class="text-xs text-slate-600 mt-2 line-clamp-3">
+                  Edukasi mendalam mengenai simplifikasi 21 proses bisnis perpajakan, deposit pajak, dan integrasi NIK menjadi NPWP bagi mahasiswa.
+                </p>
+              </div>
+            </div>
+            <div class="p-5 pt-0">
+              <button onclick="openModalNews('Persiapan Implementasi Coretax DJP', 'Humas &bull; 14 Nov 2026', 'Edukasi mendalam mengenai simplifikasi 21 proses bisnis perpajakan, deposit pajak, dan integrasi NIK menjadi NPWP.', 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=700&q=80')" class="w-full py-2 bg-slate-100 hover:bg-brand-yellow hover:text-brand-navy rounded-xl text-xs font-bold text-slate-700 transition">
+                Baca Selengkapnya
+              </button>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+      </div>
+{% endblock %}
+
