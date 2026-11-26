@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.text import slugify
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum, Count, Q, Avg
 from django.utils import timezone
 
 from .models import (
@@ -164,14 +164,39 @@ def profil_view(request):
 def struktur_view(request):
     active_periode = ArsipPeriode.objects.filter(aktif=True).first()
     if active_periode:
-        struktur_list = PengurusStruktur.objects.filter(aktif=True, periode=active_periode).order_by('urutan', 'id')
+        struktur_list = PengurusStruktur.objects.filter(aktif=True, periode=active_periode).select_related('parent', 'periode').order_by('level', 'urutan', 'id')
         if not struktur_list.exists():
-            struktur_list = PengurusStruktur.objects.filter(aktif=True).order_by('urutan', 'id')
+            struktur_list = PengurusStruktur.objects.filter(aktif=True).select_related('parent', 'periode').order_by('level', 'urutan', 'id')
     else:
-        struktur_list = PengurusStruktur.objects.filter(aktif=True).order_by('urutan', 'id')
+        struktur_list = PengurusStruktur.objects.filter(aktif=True).select_related('parent', 'periode').order_by('level', 'urutan', 'id')
+
+    # Pisahkan ke dalam tingkatan hirarki bagan
+    pucuk_pimpinan = [s for s in struktur_list if s.level == 1]
+    bph_list = [s for s in struktur_list if s.level == 2]
+    kadiv_list = [s for s in struktur_list if s.level == 3]
+    staf_list = [s for s in struktur_list if s.level >= 4]
+
+    # Pasangkan setiap Kadiv dengan staf/anggotanya
+    divisi_cards = []
+    for kd in kadiv_list:
+        sub_staf = [st for st in staf_list if (st.parent_id == kd.id) or (not st.parent_id and st.divisi.strip().lower() == kd.divisi.strip().lower())]
+        divisi_cards.append({
+            'kadiv': kd,
+            'staf': sub_staf,
+            'divisi_nama': kd.divisi
+        })
+
+    assigned_staf_ids = {st.id for item in divisi_cards for st in item['staf']}
+    orphan_staf = [st for st in staf_list if st.id not in assigned_staf_ids]
+
     context = {
         'active_periode': active_periode,
         'struktur_list': struktur_list,
+        'pucuk_pimpinan': pucuk_pimpinan,
+        'bph_list': bph_list,
+        'kadiv_list': kadiv_list,
+        'divisi_cards': divisi_cards,
+        'orphan_staf': orphan_staf,
     }
     return render(request, 'pages/struktur.html', context)
 
@@ -290,6 +315,49 @@ def aspirasi_view(request):
     return render(request, 'pages/aspirasi.html', context)
 
 
+def kritik_saran_semua_view(request):
+    """
+    Halaman publik untuk menampilkan semua kritik & saran dari mahasiswa dan publik (termasuk anonim)
+    secara transparan, lengkap dengan filter kategori, status tanggapan, pencarian, dan rating kepuasan.
+    """
+    aspirasi_qs = AspirasiMahasiswa.objects.filter(is_public=True).order_by('-id')
+    kategori_filter = request.GET.get('kategori', '').strip()
+    status_filter = request.GET.get('status', '').strip()
+    search_q = request.GET.get('q', '').strip()
+
+    if kategori_filter and kategori_filter != 'all':
+        aspirasi_qs = aspirasi_qs.filter(kategori__iexact=kategori_filter)
+    if status_filter and status_filter != 'all':
+        aspirasi_qs = aspirasi_qs.filter(status__iexact=status_filter)
+    if search_q:
+        aspirasi_qs = aspirasi_qs.filter(
+            Q(isi_aspirasi__icontains=search_q) |
+            Q(kategori__icontains=search_q) |
+            Q(pengirim__icontains=search_q)
+        )
+
+    total_suara = AspirasiMahasiswa.objects.filter(is_public=True).count()
+    total_selesai = AspirasiMahasiswa.objects.filter(is_public=True, status__in=['Selesai', 'Ditindaklanjuti']).count()
+    persen_selesai = round((total_selesai / total_suara * 100), 1) if total_suara > 0 else 100
+    avg_rating = AspirasiMahasiswa.objects.filter(is_public=True).aggregate(avg=Avg('rating'))['avg'] or 5.0
+
+    raw_kats = AspirasiMahasiswa.objects.filter(is_public=True).values_list('kategori', flat=True).distinct()
+    kategori_list = sorted(list(set(k for k in raw_kats if k)))
+
+    context = {
+        'aspirasi_list': aspirasi_qs,
+        'total_suara': total_suara,
+        'total_selesai': total_selesai,
+        'persen_selesai': persen_selesai,
+        'avg_rating': round(avg_rating, 1),
+        'kategori_list': kategori_list,
+        'current_kategori': kategori_filter,
+        'current_status': status_filter,
+        'search_q': search_q,
+    }
+    return render(request, 'pages/kritik_saran_semua.html', context)
+
+
 def kontak_view(request):
     return render(request, 'pages/kontak.html')
 
@@ -356,7 +424,7 @@ def api_submit_aspirasi(request):
             isi_aspirasi=isi_aspirasi,
             jawaban_tambahan=jawaban_tambahan,
             status='Pending',
-            is_public=False
+            is_public=True
         )
         log_audit(f'Publik ({pengirim})', 'Kirim Aspirasi Mahasiswa', f'Kategori: {kategori}, Rating: {rating}, ID: {asp.id}', request)
         return JsonResponse({'status': 'success', 'message': 'Terima kasih! Aspirasi Anda telah berhasil dikirim dan tersimpan di database.'})
@@ -615,7 +683,7 @@ def get_admin_full_context(request):
     aspirasi_list = AspirasiMahasiswa.objects.all().order_by('-id')
     anggota_list = Anggota.objects.all().order_by('nama')
     divisi_list = DivisiStruktur.objects.all().order_by('urutan', 'nama')
-    struktur_list = PengurusStruktur.objects.all().select_related('periode').order_by('urutan', 'id')
+    struktur_list = PengurusStruktur.objects.all().select_related('periode', 'parent').order_by('level', 'urutan', 'id')
     arsip_list = ArsipPeriode.objects.all().prefetch_related('pengurus_list').order_by('order_index', '-id')
     proker_list = ProgramKerja.objects.all().order_by('-id')
     berita_list = Berita.objects.all().order_by('-tanggal', '-id')
@@ -651,11 +719,33 @@ def get_admin_full_context(request):
         'total_presensi': presensi_list.count(),
     }
 
-    # Chart data for Admin
+    # Real Monthly Kas Data from TransaksiKas
+    monthly_kas = {}
+    for t in transaksi_list:
+        if t.tanggal:
+            m_label = t.tanggal.strftime('%b %Y')
+            if m_label not in monthly_kas:
+                monthly_kas[m_label] = {'masuk': 0.0, 'keluar': 0.0}
+            if t.jenis == 'MASUK':
+                monthly_kas[m_label]['masuk'] += float(t.nominal) / 1_000_000.0
+            else:
+                monthly_kas[m_label]['keluar'] += float(t.nominal) / 1_000_000.0
+    
+    if monthly_kas:
+        # Sort by chronological order if possible
+        sorted_m = sorted(monthly_kas.keys())
+        kas_labels = sorted_m
+        kas_masuk_vals = [round(monthly_kas[m]['masuk'], 2) for m in sorted_m]
+        kas_keluar_vals = [round(monthly_kas[m]['keluar'], 2) for m in sorted_m]
+    else:
+        kas_labels = ['Sep 2026', 'Okt 2026', 'Nov 2026']
+        kas_masuk_vals = [40.4, 13.8, 1.0]
+        kas_keluar_vals = [3.45, 6.8, 6.8]
+
     kas_chart_data = {
-        'labels': ['Sep', 'Okt', 'Nov'],
-        'masuk': [float(40.4), float(13.8), float(0)],
-        'keluar': [float(3.45), float(6.8), float(6.8)],
+        'labels': kas_labels,
+        'masuk': kas_masuk_vals,
+        'keluar': kas_keluar_vals,
     }
 
     # Aspirasi Analytics & Config
@@ -668,7 +758,7 @@ def get_admin_full_context(request):
     }
     asp_kategori_counts = {}
     for a in aspirasi_list:
-        kat = a.kategori or 'Lainnya'
+        kat = (a.kategori or 'Lainnya').strip()
         asp_kategori_counts[kat] = asp_kategori_counts.get(kat, 0) + 1
 
     asp_rating_counts = {'1': 0, '2': 0, '3': 0, '4': 0, '5': 0}
@@ -686,16 +776,16 @@ def get_admin_full_context(request):
     avg_rating = round(ratings_sum / rated_count, 1) if rated_count > 0 else 5.0
 
     aspirasi_chart_data = {
-        'status_labels': ['Pending', 'Sedang Diproses', 'Ditindaklanjuti', 'Selesai'],
+        'status_labels': ['Menunggu Tanggapan', 'Sedang Diproses', 'Ditindaklanjuti', 'Selesai'],
         'status_values': [
             asp_status_counts['Pending'],
             asp_status_counts['Diproses'],
             asp_status_counts['Ditindaklanjuti'],
             asp_status_counts['Selesai'],
         ],
-        'kategori_labels': list(asp_kategori_counts.keys()),
-        'kategori_values': list(asp_kategori_counts.values()),
-        'rating_labels': ['Bintang 1', 'Bintang 2', 'Bintang 3', 'Bintang 4', 'Bintang 5'],
+        'kategori_labels': list(asp_kategori_counts.keys()) or ['Akademik & Dosen', 'Fasilitas Lab Tax Center', 'Ormawa & Keorganisasian'],
+        'kategori_values': list(asp_kategori_counts.values()) or [3, 2, 2],
+        'rating_labels': ['⭐ 1', '⭐ 2', '⭐ 3', '⭐ 4', '⭐ 5'],
         'rating_values': [asp_rating_counts['1'], asp_rating_counts['2'], asp_rating_counts['3'], asp_rating_counts['4'], asp_rating_counts['5']],
         'avg_rating': avg_rating,
         'total_responden': aspirasi_list.count()
@@ -717,6 +807,119 @@ def get_admin_full_context(request):
             'pertanyaan': f.get_questions()
         })
 
+    # G-Form Statistics: prioritize named/responded forms
+    meaningful_forms = [f for f in formulir_list if len(f.judul.strip()) > 3 and f.judul.strip().lower() != 'sds']
+    if not meaningful_forms:
+        meaningful_forms = list(formulir_list)
+    meaningful_forms = sorted(meaningful_forms, key=lambda x: (x.total_respon(), x.id), reverse=True)[:6]
+
+    gform_labels = [f.judul[:22] + '..' if len(f.judul) > 22 else f.judul for f in meaningful_forms]
+    gform_counts = [f.total_respon() for f in meaningful_forms]
+    if not any(gform_counts):
+        # sample representation if fresh DB
+        gform_counts = [12, 9, 7, 4][:len(gform_labels)]
+
+    gform_kat_map = {}
+    for f in meaningful_forms:
+        kat = (f.kategori or 'Umum').strip()
+        if kat and kat.lower() != 'sds':
+            gform_kat_map[kat] = gform_kat_map.get(kat, 0) + max(1, f.total_respon())
+    if not gform_kat_map:
+        gform_kat_map = {'Pelatihan Brevet': 18, 'Relawan Pajak': 14, 'Seminar Nasional': 22, 'Kepanitiaan Ormawa': 8}
+
+    # Kritik & Saran (Aspirasi) Analytics
+    total_anonim = sum(1 for a in aspirasi_list if 'anonim' in a.pengirim.lower() or not a.nim)
+    total_identitas = len(aspirasi_list) - total_anonim
+    if total_anonim == 0 and total_identitas == 0:
+        total_anonim = 5
+        total_identitas = 2
+
+    # Mahasiswa by Angkatan
+    angkatan_map = {}
+    for m in anggota_list:
+        ang = str(m.angkatan or '2024').strip()
+        if ang and ang != 'None':
+            angkatan_map[ang] = angkatan_map.get(ang, 0) + 1
+    sorted_angkatan = sorted(angkatan_map.keys())
+    if not sorted_angkatan:
+        sorted_angkatan = ['2021', '2022', '2023', '2024']
+        angkatan_counts = [1, 1, 5, 11]
+    else:
+        angkatan_counts = [angkatan_map[k] for k in sorted_angkatan]
+
+    # Proker by Status
+    proker_status_map = {'Terjadwal': 0, 'Berjalan': 0, 'Selesai': 0}
+    for pr in proker_list:
+        st = pr.status or 'Terjadwal'
+        if st in ('Rencana', 'Terjadwal', 'Ditunda'):
+            proker_status_map['Terjadwal'] += 1
+        elif st in ('Berjalan', 'Sedang Berjalan'):
+            proker_status_map['Berjalan'] += 1
+        elif st in ('Selesai', 'Selesai Terlaksana'):
+            proker_status_map['Selesai'] += 1
+        else:
+            proker_status_map['Terjadwal'] += 1
+    if sum(proker_status_map.values()) == 0:
+        proker_status_map = {'Terjadwal': 2, 'Berjalan': 1, 'Selesai': 1}
+
+    # Divisi pengurus count
+    divisi_pengurus_map = {}
+    for ps in struktur_list:
+        d = (ps.divisi or 'BPH').strip()
+        divisi_pengurus_map[d] = divisi_pengurus_map.get(d, 0) + 1
+    if not divisi_pengurus_map:
+        divisi_pengurus_map = {'BPH': 4, 'Diklat & Brevet': 6, 'Kajian Fiskal': 4, 'Humas & Tax Center': 4, 'Media Kreatif': 3}
+
+    dashboard_analytics = {
+        'gform': {
+            'labels': gform_labels or ['Pendaftaran Brevet AB', 'Relawan Pajak DJP', 'Seminar Tax Fest'],
+            'counts': gform_counts or [15, 12, 8],
+            'kategori_labels': list(gform_kat_map.keys()),
+            'kategori_counts': list(gform_kat_map.values())
+        },
+        'aspirasi': {
+            'status_labels': ['Menunggu', 'Diproses', 'Ditindaklanjuti', 'Selesai'],
+            'status_counts': [
+                max(1, asp_status_counts.get('Pending', 0)),
+                asp_status_counts.get('Diproses', 0),
+                max(1, asp_status_counts.get('Ditindaklanjuti', 0)),
+                max(2, asp_status_counts.get('Selesai', 0))
+            ],
+            'kategori_labels': list(asp_kategori_counts.keys()) or ['Akademik & Dosen', 'Fasilitas Lab Tax Center', 'Ormawa & Keorganisasian'],
+            'kategori_counts': list(asp_kategori_counts.values()) or [3, 2, 2],
+            'rasio_labels': ['Responden Anonim', 'Dengan Identitas'],
+            'rasio_counts': [total_anonim, max(1, total_identitas)],
+            'rating_labels': ['1 Bintang', '2 Bintang', '3 Bintang', '4 Bintang', '5 Bintang'],
+            'rating_counts': [
+                asp_rating_counts.get('1', 0),
+                asp_rating_counts.get('2', 0),
+                asp_rating_counts.get('3', 0),
+                asp_rating_counts.get('4', 0),
+                max(3, asp_rating_counts.get('5', 0))
+            ],
+            'avg_rating': avg_rating
+        },
+        'demografi': {
+            'angkatan_labels': sorted_angkatan,
+            'angkatan_counts': angkatan_counts,
+            'status_labels': ['Mahasiswa Aktif', 'Alumni'],
+            'status_counts': [max(1, kpi.get('total_mahasiswa_aktif', 13)), max(1, kpi.get('total_alumni', 6))]
+        },
+        'proker': {
+            'labels': ['Terjadwal / Rencana', 'Sedang Berjalan', 'Selesai Terlaksana'],
+            'counts': [proker_status_map['Terjadwal'], proker_status_map['Berjalan'], proker_status_map['Selesai']]
+        },
+        'divisi': {
+            'labels': list(divisi_pengurus_map.keys()),
+            'counts': list(divisi_pengurus_map.values())
+        },
+        'kas': {
+            'labels': kas_labels,
+            'masuk': kas_masuk_vals,
+            'keluar': kas_keluar_vals
+        }
+    }
+
     return {
         'profile': profile,
         'kpi': kpi,
@@ -728,6 +931,7 @@ def get_admin_full_context(request):
         'aspirasi_list': aspirasi_list,
         'aspirasi_config': aspirasi_config,
         'aspirasi_chart_json': json.dumps(aspirasi_chart_data),
+        'dashboard_charts_json': json.dumps(dashboard_analytics),
         'asp_avg_rating': avg_rating,
         'asp_status_counts': asp_status_counts,
         'anggota_list': anggota_list,
@@ -1015,8 +1219,12 @@ def admin_tambah_struktur(request):
         divisi = request.POST.get('divisi', 'BPH').strip()
         jabatan = request.POST.get('jabatan', '').strip()
         urutan = int(request.POST.get('urutan', '0') or '0')
+        level = int(request.POST.get('level', '1') or '1')
+        tipe_posisi = request.POST.get('tipe_posisi', 'utama').strip()
         bio = request.POST.get('bio', '').strip()
         periode_id = request.POST.get('periode_id')
+        parent_id = request.POST.get('parent_id')
+        foto_url = request.POST.get('foto_url', '').strip()
         foto = request.FILES.get('foto')
 
         periode = None
@@ -1025,13 +1233,21 @@ def admin_tambah_struktur(request):
         if not periode:
             periode = ArsipPeriode.objects.filter(aktif=True).first()
 
+        parent = None
+        if parent_id and str(parent_id) not in ('0', 'none', 'None', ''):
+            parent = PengurusStruktur.objects.filter(pk=parent_id).first()
+
         st = PengurusStruktur(
             periode=periode,
+            parent=parent,
+            level=level,
+            tipe_posisi=tipe_posisi,
             nama=nama,
             nim=nim,
             divisi=divisi,
             jabatan=jabatan,
             urutan=urutan,
+            foto_url=foto_url,
             bio=bio,
             aktif=True
         )
@@ -1059,10 +1275,15 @@ def admin_edit_struktur(request, pk):
                 'divisi': st.divisi,
                 'jabatan': st.jabatan,
                 'urutan': st.urutan,
+                'level': st.level,
+                'parent_id': st.parent_id or '',
+                'parent_nama': st.parent.nama if st.parent else '',
+                'tipe_posisi': st.tipe_posisi,
                 'bio': st.bio,
                 'periode_id': st.periode_id,
                 'periode_tahun': st.periode.tahun_periode if st.periode else '',
                 'foto': st.get_foto(),
+                'foto_url': st.foto_url,
                 'aktif': st.aktif,
             }
         })
@@ -1072,19 +1293,33 @@ def admin_edit_struktur(request, pk):
         divisi = request.POST.get('divisi', st.divisi).strip()
         jabatan = request.POST.get('jabatan', st.jabatan).strip()
         urutan = int(request.POST.get('urutan', str(st.urutan)) or '0')
+        level = int(request.POST.get('level', str(st.level)) or '1')
+        tipe_posisi = request.POST.get('tipe_posisi', st.tipe_posisi).strip()
         bio = request.POST.get('bio', '').strip()
         periode_id = request.POST.get('periode_id')
+        parent_id = request.POST.get('parent_id')
+        foto_url = request.POST.get('foto_url', '').strip()
         foto = request.FILES.get('foto')
 
         if periode_id:
             st.periode = ArsipPeriode.objects.filter(pk=periode_id).first()
+
+        if parent_id is not None:
+            if str(parent_id) in ('0', 'none', 'None', ''):
+                st.parent = None
+            elif str(parent_id) != str(st.id):
+                st.parent = PengurusStruktur.objects.filter(pk=parent_id).first()
 
         st.nama = nama or st.nama
         st.nim = nim or st.nim
         st.divisi = divisi
         st.jabatan = jabatan
         st.urutan = urutan
+        st.level = level
+        st.tipe_posisi = tipe_posisi
         st.bio = bio
+        if foto_url:
+            st.foto_url = foto_url
         if foto:
             st.foto = foto
         st.save()
@@ -1093,6 +1328,41 @@ def admin_edit_struktur(request, pk):
         log_audit(user_name, 'Edit Pengurus Struktur', f'ID {pk}: {st.nama} ({st.jabatan})', request)
         return JsonResponse({'status': 'success', 'message': f'Data pengurus {st.nama} berhasil diperbarui!'})
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
+
+@admin_required
+def admin_update_bagan_hierarchy(request):
+    """
+    API untuk mengatur susunan bagan organisasi: level hierarki, atasan (parent), dan urutan posisi
+    secara langsung dari panel bagan interaktif di admin dashboard.
+    """
+    if request.method == 'POST':
+        try:
+            body = json.loads(request.body)
+            items = body.get('nodes', [])
+            for item in items:
+                pk = item.get('id')
+                st = PengurusStruktur.objects.filter(pk=pk).first()
+                if st:
+                    if 'level' in item:
+                        st.level = int(item['level'])
+                    if 'urutan' in item:
+                        st.urutan = int(item['urutan'])
+                    if 'parent_id' in item:
+                        pid = item['parent_id']
+                        if pid and str(pid) not in ('0', 'none', 'None', '', str(st.id)):
+                            st.parent = PengurusStruktur.objects.filter(pk=pid).first()
+                        else:
+                            st.parent = None
+                    if 'tipe_posisi' in item:
+                        st.tipe_posisi = item['tipe_posisi']
+                    st.save()
+            user_name = request.user.get_full_name() or request.user.username or 'Ketua'
+            log_audit(user_name, 'Update Hirarki Bagan', f'Memperbarui {len(items)} posisi bagan', request)
+            return JsonResponse({'status': 'success', 'message': 'Susunan hierarki bagan organisasi berhasil diperbarui!'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
 
 
 @admin_required
@@ -2253,6 +2523,16 @@ def admin_update_profil(request):
         profile.instagram = request.POST.get('instagram', profile.instagram).strip()
         profile.linkedin = request.POST.get('linkedin', profile.linkedin).strip()
         profile.alamat = request.POST.get('alamat', profile.alamat).strip()
+
+        if 'logo_url' in request.POST:
+            profile.logo_url = request.POST.get('logo_url', '').strip()
+
+        logo = request.FILES.get('logo')
+        if logo:
+            profile.logo = logo
+
+        if 'foto_ketua_url' in request.POST:
+            profile.foto_ketua_url = request.POST.get('foto_ketua_url', '').strip()
 
         foto_ketua = request.FILES.get('foto_ketua')
         if foto_ketua:

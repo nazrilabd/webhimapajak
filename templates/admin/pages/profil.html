@@ -1,84 +1,231 @@
 {% extends 'admin/base.html' %}
 
-{% block title %}Profil & Pengaturan Organisasi - HIMA PERPAJAKAN UIMANDIRI{% endblock %}
+{% block title %}Profil & Identitas Organisasi - HIMA PERPAJAKAN UIMANDIRI{% endblock %}
 
-{% block page_heading %}Profil & Pengaturan Organisasi{% endblock %}
+{% block page_heading %}Profil & Identitas Organisasi{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
-<div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-xl font-black text-brand-navy">Profil & Pengaturan Organisasi</h2>
-            <p class="text-xs text-slate-400">Perbarui visi, misi, sejarah pendirian, sambutan ketua, foto ketua, dan kontak resmi.</p>
-          </div>
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-black text-brand-navy">Profil & Identitas Organisasi</h2>
+      <p class="text-xs text-slate-400">Kelola identitas resmi HIMA termasuk Logo, Tagline, Visi, Misi, Sejarah, Filosofi Lambang, Sambutan Ketua, dan Kontak.</p>
+    </div>
+    <div>
+      <a href="{% url 'profil' %}" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition">
+        <i class="fa-solid fa-arrow-up-right-from-square"></i> Lihat Halaman Profil Publik
+      </a>
+    </div>
+  </div>
+
+  <form id="form-update-profil" onsubmit="handleUpdateProfilSubmit(event)" enctype="multipart/form-data" class="space-y-6">
+    {% csrf_token %}
+
+    <!-- Card 1: Logo & Branding Identitas -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 space-y-5 shadow-sm">
+      <div class="flex items-center gap-2 pb-3 border-b border-slate-100">
+        <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-900 flex items-center justify-center font-bold text-sm">
+          <i class="fa-solid fa-gem"></i>
+        </span>
+        <div>
+          <h3 class="font-black text-sm text-brand-navy">Logo & Branding Organisasi</h3>
+          <p class="text-[11px] text-slate-400">Atur visual logo utama yang tampil pada navbar, footer, dan dokumen.</p>
         </div>
-
-        <form id="form-update-profil" onsubmit="handleUpdateProfilSubmit(event)" enctype="multipart/form-data" class="bg-white rounded-2xl border border-slate-200 p-6 space-y-4 shadow-sm">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">Nama Organisasi</label>
-              <input type="text" name="nama_organisasi" value="{{ profile.nama_organisasi }}" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg">
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">Tagline Slogan</label>
-              <input type="text" name="tagline" value="{{ profile.tagline }}" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">Nama Ketua Umum</label>
-              <input type="text" name="nama_ketua" value="{{ profile.nama_ketua }}" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg">
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">Periode Aktif</label>
-              <input type="text" name="periode_aktif" value="{{ profile.periode_aktif }}" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg">
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Sambutan Ketua Umum</label>
-            <textarea name="sambutan_ketua" rows="3" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg">{{ profile.sambutan_ketua }}</textarea>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Foto Ketua Umum (Upload ke Cloudinary)</label>
-            <input type="file" name="foto_ketua" accept="image/*" class="w-full text-slate-500 text-[11px] file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-100 file:font-semibold">
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Visi Organisasi</label>
-            <textarea name="visi" rows="2" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg">{{ profile.visi }}</textarea>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Misi Organisasi</label>
-            <textarea name="misi" rows="3" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg">{{ profile.misi }}</textarea>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">Email Sekretariat</label>
-              <input type="email" name="email" value="{{ profile.email }}" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg">
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">No WhatsApp</label>
-              <input type="text" name="no_whatsapp" value="{{ profile.no_whatsapp }}" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg">
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Alamat Sekretariat</label>
-            <input type="text" name="alamat" value="{{ profile.alamat }}" class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg">
-          </div>
-
-          <button type="submit" class="bg-brand-yellow hover:bg-brand-yellowHover text-brand-navy font-black text-xs px-5 py-2.5 rounded-xl shadow transition">
-            <i class="fa-solid fa-check mr-1"></i> Simpan Data Organisasi ke Database
-          </button>
-        </form>
-
       </div>
 
-      <!-- ==================== TAB 12: MULTI ADMIN & HAK AKSES ==================== -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+        <!-- Logo Preview -->
+        <div class="md:col-span-3 text-center p-4 bg-slate-50 rounded-2xl border border-slate-200">
+          <label class="block text-xs font-bold text-slate-600 mb-2">Preview Logo Saat Ini</label>
+          <div class="w-24 h-24 mx-auto rounded-2xl overflow-hidden bg-white border-2 border-brand-yellow/60 p-2 flex items-center justify-center shadow-sm">
+            {% if profile.get_logo %}
+              <img id="logo-preview-img" src="{{ profile.get_logo }}" alt="Logo" class="max-w-full max-h-full object-contain">
+            {% else %}
+              <div id="logo-fallback-icon" class="text-3xl text-brand-navy">
+                <i class="fa-solid fa-scale-balanced"></i>
+              </div>
+            {% endif %}
+          </div>
+          <span class="inline-block mt-2 text-[10px] text-slate-400">Rasio 1:1 disarankan</span>
+        </div>
+
+        <!-- Logo Inputs -->
+        <div class="md:col-span-9 space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Upload File Logo Baru (PNG/JPG/SVG)</label>
+            <input type="file" name="logo" id="input-profile-logo" accept="image/*" class="w-full text-slate-500 text-xs file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-brand-navy file:text-white file:font-bold hover:file:bg-brand-navyLight file:cursor-pointer border border-slate-200 rounded-xl p-1 bg-white">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Atau Gunakan URL Gambar Logo Eksternal</label>
+            <input type="url" name="logo_url" value="{{ profile.logo_url|default:'' }}" placeholder="https://res.cloudinary.com/.../logo.png" class="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl focus:border-brand-navy font-mono">
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Nama Resmi Organisasi</label>
+          <input type="text" name="nama_organisasi" value="{{ profile.nama_organisasi }}" required class="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl focus:border-brand-navy font-bold text-brand-navy">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Tagline / Slogan Organisasi</label>
+          <input type="text" name="tagline" value="{{ profile.tagline }}" required class="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl focus:border-brand-navy">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Deskripsi Singkat Organisasi</label>
+        <textarea name="deskripsi" rows="2" class="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl focus:border-brand-navy">{{ profile.deskripsi }}</textarea>
+      </div>
+    </div>
+
+    <!-- Card 2: Visi & Misi Organisasi -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 space-y-4 shadow-sm">
+      <div class="flex items-center gap-2 pb-3 border-b border-slate-100">
+        <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center font-bold text-sm">
+          <i class="fa-solid fa-bullseye"></i>
+        </span>
+        <div>
+          <h3 class="font-black text-sm text-brand-navy">Visi & Misi Organisasi</h3>
+          <p class="text-[11px] text-slate-400">Pedoman dasar dan tujuan strategis kepengurusan.</p>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Visi Organisasi</label>
+        <textarea name="visi" rows="3" required class="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl focus:border-brand-navy leading-relaxed">{{ profile.visi }}</textarea>
+        <span class="text-[10px] text-slate-400">Pernyataan cita-cita jangka panjang HIMA Perpajakan.</span>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Misi Organisasi</label>
+        <textarea name="misi" rows="5" required class="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl focus:border-brand-navy leading-relaxed font-mono text-[11px]">{{ profile.misi }}</textarea>
+        <span class="text-[10px] text-slate-400">Gunakan penomoran atau baris baru untuk setiap poin misi.</span>
+      </div>
+    </div>
+
+    <!-- Card 3: Sejarah & Makna Lambang -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 space-y-4 shadow-sm">
+      <div class="flex items-center gap-2 pb-3 border-b border-slate-100">
+        <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-900 flex items-center justify-center font-bold text-sm">
+          <i class="fa-solid fa-landmark"></i>
+        </span>
+        <div>
+          <h3 class="font-black text-sm text-brand-navy">Sejarah Pendirian & Filosofi Lambang</h3>
+          <p class="text-[11px] text-slate-400">Dokumentasi historis dan arti filosofis di balik logo ormawa.</p>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Sejarah Pendirian Organisasi</label>
+        <textarea name="sejarah" rows="4" class="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl focus:border-brand-navy leading-relaxed">{{ profile.sejarah }}</textarea>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Makna Lambang / Filosofi Logo</label>
+        <textarea name="makna_lambang" rows="3" class="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl focus:border-brand-navy leading-relaxed">{{ profile.makna_lambang }}</textarea>
+      </div>
+    </div>
+
+    <!-- Card 4: Kepemimpinan & Sambutan -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 space-y-5 shadow-sm">
+      <div class="flex items-center gap-2 pb-3 border-b border-slate-100">
+        <span class="w-8 h-8 rounded-lg bg-purple-100 text-purple-900 flex items-center justify-center font-bold text-sm">
+          <i class="fa-solid fa-user-tie"></i>
+        </span>
+        <div>
+          <h3 class="font-black text-sm text-brand-navy">Pimpinan & Periode Kepengurusan</h3>
+          <p class="text-[11px] text-slate-400">Profil ketua umum yang sedang menjabat dan sambutan ormawa.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Nama Ketua Umum</label>
+          <input type="text" name="nama_ketua" value="{{ profile.nama_ketua }}" required class="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl font-bold text-brand-navy">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Periode Aktif</label>
+          <input type="text" name="periode_aktif" value="{{ profile.periode_aktif }}" required class="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl font-bold">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+        <!-- Foto Ketua Preview -->
+        <div class="md:col-span-3 text-center p-4 bg-slate-50 rounded-2xl border border-slate-200">
+          <label class="block text-xs font-bold text-slate-600 mb-2">Foto Ketua Saat Ini</label>
+          <div class="w-24 h-24 mx-auto rounded-2xl overflow-hidden bg-white border-2 border-brand-yellow shadow-sm">
+            <img src="{{ profile.get_foto_ketua }}" alt="Foto Ketua" class="w-full h-full object-cover">
+          </div>
+        </div>
+        <!-- Foto Ketua Inputs -->
+        <div class="md:col-span-9 space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Upload Foto Ketua Baru</label>
+            <input type="file" name="foto_ketua" accept="image/*" class="w-full text-slate-500 text-xs file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-brand-navy file:text-white file:font-bold hover:file:bg-brand-navyLight border border-slate-200 rounded-xl p-1 bg-white">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Atau URL Foto Ketua</label>
+            <input type="url" name="foto_ketua_url" value="{{ profile.foto_ketua_url|default:'' }}" placeholder="https://..." class="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl font-mono">
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Sambutan Ketua Umum</label>
+        <textarea name="sambutan_ketua" rows="3" class="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl leading-relaxed">{{ profile.sambutan_ketua }}</textarea>
+      </div>
+    </div>
+
+    <!-- Card 5: Kontak & Media Sosial -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 space-y-4 shadow-sm">
+      <div class="flex items-center gap-2 pb-3 border-b border-slate-100">
+        <span class="w-8 h-8 rounded-lg bg-rose-100 text-rose-900 flex items-center justify-center font-bold text-sm">
+          <i class="fa-solid fa-address-book"></i>
+        </span>
+        <div>
+          <h3 class="font-black text-sm text-brand-navy">Kontak Resmi & Media Sosial</h3>
+          <p class="text-[11px] text-slate-400">Saluran komunikasi yang tampil di footer dan halaman kontak.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Email Sekretariat Resmi</label>
+          <input type="email" name="email" value="{{ profile.email }}" required class="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Nomor WhatsApp / Hotline</label>
+          <input type="text" name="no_whatsapp" value="{{ profile.no_whatsapp }}" required class="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Akun Instagram</label>
+          <input type="text" name="instagram" value="{{ profile.instagram }}" placeholder="@himapajak_uimandiri" class="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Akun LinkedIn</label>
+          <input type="text" name="linkedin" value="{{ profile.linkedin }}" placeholder="HIMA Perpajakan UIMANDIRI" class="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Alamat Sekretariat</label>
+        <textarea name="alamat" rows="2" class="w-full px-3.5 py-2 text-xs border border-slate-200 rounded-xl">{{ profile.alamat }}</textarea>
+      </div>
+    </div>
+
+    <!-- Submit Action -->
+    <div class="sticky bottom-4 z-20 bg-white/90 backdrop-blur-md p-4 rounded-2xl border border-slate-200 shadow-xl flex items-center justify-between gap-4">
+      <div class="text-xs text-slate-500">
+        <i class="fa-solid fa-circle-info text-blue-600 mr-1"></i> Perubahan akan langsung tersimpan di database dan tampil di seluruh portal publik.
+      </div>
+      <button type="submit" id="btn-save-profile" class="bg-brand-yellow hover:bg-brand-yellowHover text-brand-navy font-black text-xs px-6 py-3 rounded-xl shadow-md transition flex items-center gap-2 transform hover:-translate-y-0.5">
+        <i class="fa-solid fa-cloud-arrow-up"></i> Simpan Semua Identitas HIMA
+      </button>
+    </div>
+  </form>
 </div>
 {% endblock %}

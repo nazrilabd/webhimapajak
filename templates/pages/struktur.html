@@ -3,42 +3,353 @@
 {% block title %}Struktur Kepengurusan - {{ profile.nama_organisasi|default:"HIMA PERPAJAKAN UIMANDIRI" }}{% endblock %}
 
 {% block content %}
-      <div class="bg-brand-navy text-white py-14">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="text-xs text-brand-yellow uppercase tracking-widest font-bold">Struktur Kepemimpinan</div>
-          <h1 class="text-3xl sm:text-4xl font-black mt-1">Struktur Kepengurusan Aktif ({{ active_periode.tahun_periode|default:"2026/2027" }})</h1>
-          <p class="text-slate-300 text-sm mt-2 max-w-2xl">{{ active_periode.nama_kabinet|default:"Kabinet Sinergi Fiskal" }} &bull; Profil pimpinan dan pembagian divisi HIMA Perpajakan UIMANDIRI.</p>
-        </div>
+<!-- Header Hero -->
+<div class="bg-brand-navy text-white py-14 border-b border-brand-navyLight">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="inline-flex items-center gap-2 bg-brand-yellow text-brand-navy text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-wider mb-2">
+      <i class="fa-solid fa-sitemap"></i> Struktur Kepemimpinan & Organisasi
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-black mt-1">Struktur Kepengurusan Aktif ({{ active_periode.tahun_periode|default:"2026/2027" }})</h1>
+    <p class="text-slate-300 text-sm mt-2 max-w-2xl">
+      {{ active_periode.nama_kabinet|default:"Kabinet Sinergi Fiskal" }} &bull; Bagan hierarki kepemimpinan, Badan Pengurus Harian, dan pimpinan divisi kerja HIMA Perpajakan UIMANDIRI.
+    </p>
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+  
+  <!-- View Mode Switcher & Controls -->
+  <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+    <div class="flex items-center gap-2">
+      <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Tampilan:</span>
+      <div class="inline-flex p-1 bg-slate-100 rounded-xl" role="group">
+        <button type="button" id="btn-view-bagan" onclick="switchStrukturView('bagan')" class="px-4 py-2 text-xs font-bold rounded-lg transition flex items-center gap-2 bg-brand-navy text-white shadow-sm">
+          <i class="fa-solid fa-diagram-project text-brand-yellow"></i>
+          <span>Bagan Pohon (Org Chart)</span>
+        </button>
+        <button type="button" id="btn-view-grid" onclick="switchStrukturView('grid')" class="px-4 py-2 text-xs font-bold rounded-lg transition flex items-center gap-2 text-slate-600 hover:text-brand-navy">
+          <i class="fa-solid fa-grip"></i>
+          <span>Daftar Kartu Pengurus</span>
+        </button>
       </div>
+    </div>
 
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 space-y-12">
-        
-        <!-- Pimpinan & Pengurus Struktural Dinamis -->
-        <div>
-          <div class="text-center mb-8">
-            <span class="text-xs font-bold text-brand-navy uppercase tracking-wider bg-amber-100 px-3 py-1 rounded-full">Struktur Kepengurusan Aktif ({{ active_periode.tahun_periode|default:"2026/2027" }})</span>
-            <h3 class="text-2xl font-black text-brand-navy mt-2">Susunan Pengurus {{ active_periode.nama_kabinet|default:"Kabinet Sinergi Fiskal" }}</h3>
-          </div>
+    <!-- Zoom & Help controls (Active on Bagan view) -->
+    <div id="bagan-zoom-controls" class="flex items-center gap-2">
+      <button type="button" onclick="zoomBagan(-0.1)" title="Zoom Out" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center transition">
+        <i class="fa-solid fa-magnifying-glass-minus"></i>
+      </button>
+      <button type="button" onclick="resetZoomBagan()" title="Reset Ukuran" class="px-2.5 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center transition">
+        <span id="zoom-level-text">100%</span>
+      </button>
+      <button type="button" onclick="zoomBagan(0.1)" title="Zoom In" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center transition">
+        <i class="fa-solid fa-magnifying-glass-plus"></i>
+      </button>
+    </div>
+  </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {% for s in struktur_list %}
-            <div class="bg-white rounded-3xl p-6 border {% if 'Ketua' in s.jabatan %}border-2 border-brand-yellow shadow-md{% else %}border border-slate-200 shadow-sm{% endif %} text-center group hover:-translate-y-1 transition duration-300">
-              <div class="w-32 h-32 rounded-2xl overflow-hidden mx-auto mb-4 border border-slate-200 shadow">
-                <img src="{{ s.get_foto }}" alt="{{ s.nama }}" class="w-full h-full object-cover">
-              </div>
-              <span class="bg-brand-navy text-brand-yellow text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">{{ s.jabatan }}</span>
-              <h4 class="font-black text-base text-brand-navy mt-2">{{ s.nama }}</h4>
-              <p class="text-xs text-slate-500 font-mono">NIM: {{ s.nim }}</p>
-              <div class="inline-block bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded mt-1">{{ s.divisi }}</div>
-              <p class="text-[11px] text-slate-600 mt-2 italic bg-slate-50 p-2 rounded-lg">"{{ s.bio }}"</p>
-              <button onclick="openMemberDetailModal('{{ s.nama|escapejs }}', '{{ s.jabatan|escapejs }}', '{{ s.divisi|escapejs }}', '{{ s.nim|escapejs }}', '{{ s.bio|escapejs }}')" class="mt-3 text-xs text-brand-navy font-bold hover:underline">
-                Lihat Uraian Tugas <i class="fa-solid fa-chevron-right text-[9px]"></i>
-              </button>
+  <!-- ==================== VIEW 1: BAGAN POHON HIRARKI (ORGANIZATIONAL CHART) ==================== -->
+  <div id="section-bagan-tree" class="bg-slate-50/70 p-6 sm:p-10 rounded-3xl border border-slate-200 shadow-inner overflow-x-auto min-h-[500px]">
+    <div class="text-center mb-6">
+      <span class="text-[11px] font-bold text-brand-navy uppercase tracking-widest bg-amber-100 px-3 py-1 rounded-full">
+        Bagan Alur Kepemimpinan
+      </span>
+      <h3 class="text-xl sm:text-2xl font-black text-brand-navy mt-1">
+        Bagan Organisasi {{ active_periode.nama_kabinet|default:"Kabinet Sinergi Fiskal" }}
+      </h3>
+      <p class="text-xs text-slate-400 mt-1">Klik pada kartu pengurus mana saja untuk melihat uraian tugas & biodata lengkap.</p>
+    </div>
+
+    <!-- Tree Chart Canvas Wrapper -->
+    <div id="bagan-chart-container" class="transition-transform duration-200 origin-top flex flex-col items-center select-none py-4" style="transform: scale(1);">
+      
+      <!-- LEVEL 1: PUCUK PIMPINAN (KETUA UMUM) -->
+      {% if pucuk_pimpinan %}
+      <div class="flex flex-col items-center">
+        <div class="flex justify-center gap-6">
+          {% for p in pucuk_pimpinan %}
+          <div onclick="openMemberDetailModal('{{ p.nama|escapejs }}', '{{ p.jabatan|escapejs }}', '{{ p.divisi|escapejs }}', '{{ p.nim|escapejs }}', '{{ p.bio|escapejs }}')"
+               class="cursor-pointer bg-white rounded-3xl p-5 border-2 border-brand-yellow shadow-xl text-center hover:-translate-y-1 hover:shadow-2xl transition duration-300 w-64 group relative">
+            <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-navy text-brand-yellow font-black text-[10px] uppercase tracking-wider px-3 py-0.5 rounded-full shadow border border-brand-yellow/50 flex items-center gap-1">
+              <i class="fa-solid fa-crown text-[9px]"></i> Pucuk Pimpinan
             </div>
-            {% endfor %}
+            <div class="w-20 h-20 rounded-2xl overflow-hidden mx-auto mt-2 mb-3 border-2 border-brand-yellow shadow">
+              <img src="{{ p.get_foto }}" alt="{{ p.nama }}" class="w-full h-full object-cover group-hover:scale-105 transition">
+            </div>
+            <span class="inline-block bg-brand-yellow text-brand-navy font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase mb-1">
+              {{ p.jabatan }}
+            </span>
+            <h4 class="font-black text-base text-brand-navy leading-snug group-hover:text-amber-800 transition">{{ p.nama }}</h4>
+            <p class="text-[11px] text-slate-400 font-mono mt-0.5">NIM: {{ p.nim }}</p>
+            <div class="mt-2 text-[10px] text-slate-500 line-clamp-2 italic bg-amber-50/60 p-1.5 rounded-lg border border-amber-100">
+              "{{ p.bio|default:'Mengkoordinasikan seluruh arah gerak dan kebijakan organisasi.' }}"
+            </div>
           </div>
+          {% endfor %}
         </div>
 
+        <!-- Vertical Trunk Line Level 1 -> Level 2 -->
+        {% if bph_list or kadiv_list %}
+        <div class="w-0.5 h-10 bg-brand-navy"></div>
+        {% endif %}
       </div>
+      {% endif %}
+
+      <!-- LEVEL 2: BADAN PENGURUS HARIAN (BPH) -->
+      {% if bph_list %}
+      <div class="flex flex-col items-center w-full">
+        <!-- Horizontal Branch Connector across BPH -->
+        <div class="relative w-full max-w-4xl flex justify-center">
+          <!-- Horizontal connector bar -->
+          {% if bph_list|length > 1 %}
+          <div class="absolute top-0 left-[15%] right-[15%] h-0.5 bg-brand-navy"></div>
+          {% endif %}
+        </div>
+
+        <div class="flex flex-wrap justify-center gap-6 pt-0">
+          {% for b in bph_list %}
+          <div class="flex flex-col items-center">
+            <!-- Drop connector from horizontal line -->
+            <div class="w-0.5 h-6 bg-brand-navy"></div>
+            
+            <div onclick="openMemberDetailModal('{{ b.nama|escapejs }}', '{{ b.jabatan|escapejs }}', '{{ b.divisi|escapejs }}', '{{ b.nim|escapejs }}', '{{ b.bio|escapejs }}')"
+                 class="cursor-pointer bg-white rounded-2xl p-4 border border-blue-200 shadow-md text-center hover:-translate-y-1 hover:shadow-xl transition duration-300 w-56 group relative">
+              <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-blue-900 text-white font-bold text-[9px] uppercase px-2 py-0.5 rounded-full shadow">
+                Badan Pengurus Harian
+              </span>
+              <div class="w-16 h-16 rounded-xl overflow-hidden mx-auto mt-1 mb-2 border border-slate-200 shadow">
+                <img src="{{ b.get_foto }}" alt="{{ b.nama }}" class="w-full h-full object-cover group-hover:scale-105 transition">
+              </div>
+              <span class="inline-block bg-blue-50 text-blue-900 font-bold text-[10px] px-2 py-0.5 rounded mb-1">
+                {{ b.jabatan }}
+              </span>
+              <h4 class="font-bold text-sm text-brand-navy leading-snug group-hover:text-blue-800 transition">{{ b.nama }}</h4>
+              <p class="text-[10px] text-slate-400 font-mono">NIM: {{ b.nim }}</p>
+              <p class="text-[10px] text-slate-500 line-clamp-1 italic mt-1 bg-slate-50 p-1 rounded">"{{ b.bio|default:b.divisi }}"</p>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Vertical Trunk Line Level 2 -> Level 3 -->
+        {% if kadiv_list %}
+        <div class="w-0.5 h-10 bg-brand-navy"></div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- LEVEL 3 & 4: DIVISI & STAF -->
+      {% if divisi_cards %}
+      <div class="flex flex-col items-center w-full">
+        <!-- Horizontal Branch Connector across Divisi -->
+        <div class="relative w-full max-w-6xl flex justify-center">
+          {% if divisi_cards|length > 1 %}
+          <div class="absolute top-0 left-[8%] right-[8%] h-0.5 bg-brand-navy"></div>
+          {% endif %}
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-0 w-full max-w-6xl">
+          {% for item in divisi_cards %}
+          <div class="flex flex-col items-center">
+            <!-- Drop connector line -->
+            <div class="w-0.5 h-6 bg-brand-navy"></div>
+
+            <!-- Kadiv Card (Head of Division) -->
+            <div class="w-full bg-white rounded-2xl border-2 border-slate-200 shadow-md p-4 text-center hover:border-brand-navy transition group">
+              <div class="bg-brand-navy text-brand-yellow font-black text-[10px] uppercase py-1 px-2.5 rounded-lg mb-3 shadow-sm flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-layer-group text-[9px]"></i>
+                <span class="truncate">{{ item.divisi_nama }}</span>
+              </div>
+
+              <!-- Kadiv Person -->
+              <div onclick="openMemberDetailModal('{{ item.kadiv.nama|escapejs }}', '{{ item.kadiv.jabatan|escapejs }}', '{{ item.kadiv.divisi|escapejs }}', '{{ item.kadiv.nim|escapejs }}', '{{ item.kadiv.bio|escapejs }}')"
+                   class="cursor-pointer p-2 rounded-xl hover:bg-slate-50 transition">
+                <div class="w-16 h-16 rounded-xl overflow-hidden mx-auto mb-2 border border-slate-200 shadow">
+                  <img src="{{ item.kadiv.get_foto }}" alt="{{ item.kadiv.nama }}" class="w-full h-full object-cover group-hover:scale-105 transition">
+                </div>
+                <span class="inline-block bg-amber-50 text-amber-900 font-black text-[10px] px-2 py-0.5 rounded uppercase">
+                  {{ item.kadiv.jabatan }}
+                </span>
+                <h5 class="font-bold text-xs text-brand-navy mt-1 truncate">{{ item.kadiv.nama }}</h5>
+                <p class="text-[10px] text-slate-400 font-mono">NIM: {{ item.kadiv.nim }}</p>
+              </div>
+
+              <!-- Subordinates / Staf Under This Kadiv -->
+              {% if item.staf %}
+              <div class="mt-3 pt-3 border-t border-slate-100 space-y-2">
+                <div class="text-[9px] font-bold uppercase tracking-wider text-slate-400 text-left flex items-center justify-between">
+                  <span>Anggota / Staf:</span>
+                  <span class="bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded font-mono">{{ item.staf|length }}</span>
+                </div>
+                <div class="space-y-1.5 text-left">
+                  {% for s in item.staf %}
+                  <div onclick="openMemberDetailModal('{{ s.nama|escapejs }}', '{{ s.jabatan|escapejs }}', '{{ s.divisi|escapejs }}', '{{ s.nim|escapejs }}', '{{ s.bio|escapejs }}')"
+                       class="cursor-pointer flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-100 transition border border-transparent hover:border-slate-200">
+                    <img src="{{ s.get_foto }}" class="w-7 h-7 rounded-lg object-cover border border-slate-200">
+                    <div class="overflow-hidden flex-1">
+                      <div class="font-bold text-[11px] text-brand-navy truncate">{{ s.nama }}</div>
+                      <div class="text-[9px] text-slate-400 truncate">{{ s.jabatan }} &bull; {{ s.nim }}</div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Orphan Staf if any -->
+      {% if orphan_staf %}
+      <div class="mt-8 pt-6 border-t border-slate-200 w-full max-w-4xl text-center">
+        <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Pengurus & Staf Pendukung Lainnya</h4>
+        <div class="flex flex-wrap justify-center gap-4">
+          {% for s in orphan_staf %}
+          <div onclick="openMemberDetailModal('{{ s.nama|escapejs }}', '{{ s.jabatan|escapejs }}', '{{ s.divisi|escapejs }}', '{{ s.nim|escapejs }}', '{{ s.bio|escapejs }}')"
+               class="cursor-pointer bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3 hover:border-brand-yellow transition">
+            <img src="{{ s.get_foto }}" class="w-10 h-10 rounded-lg object-cover border border-slate-200">
+            <div class="text-left">
+              <div class="font-bold text-xs text-brand-navy">{{ s.nama }}</div>
+              <div class="text-[10px] text-slate-500">{{ s.jabatan }} &bull; {{ s.divisi }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+  <!-- ==================== VIEW 2: DAFTAR KARTU PENGURUS LENGKAP (GRID) ==================== -->
+  <div id="section-grid-cards" class="hidden space-y-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {% for s in struktur_list %}
+      <div class="bg-white rounded-3xl p-6 border {% if 'Ketua' in s.jabatan %}border-2 border-brand-yellow shadow-md{% else %}border border-slate-200 shadow-sm{% endif %} text-center group hover:-translate-y-1 transition duration-300">
+        <div class="w-32 h-32 rounded-2xl overflow-hidden mx-auto mb-4 border border-slate-200 shadow">
+          <img src="{{ s.get_foto }}" alt="{{ s.nama }}" class="w-full h-full object-cover">
+        </div>
+        <span class="bg-brand-navy text-brand-yellow text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">{{ s.jabatan }}</span>
+        <h4 class="font-black text-base text-brand-navy mt-2">{{ s.nama }}</h4>
+        <p class="text-xs text-slate-500 font-mono">NIM: {{ s.nim }}</p>
+        <div class="inline-block bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded mt-1">{{ s.divisi }}</div>
+        <p class="text-[11px] text-slate-600 mt-2 italic bg-slate-50 p-2 rounded-lg">"{{ s.bio|default:'Melayani dan berkontribusi aktif dalam memajukan himpunan.' }}"</p>
+        <button onclick="openMemberDetailModal('{{ s.nama|escapejs }}', '{{ s.jabatan|escapejs }}', '{{ s.divisi|escapejs }}', '{{ s.nim|escapejs }}', '{{ s.bio|escapejs }}')" class="mt-3 text-xs text-brand-navy font-bold hover:underline inline-flex items-center gap-1">
+          <span>Lihat Uraian Tugas</span>
+          <i class="fa-solid fa-chevron-right text-[9px]"></i>
+        </button>
+      </div>
+      {% empty %}
+      <div class="col-span-4 text-center py-12 text-slate-400 bg-white rounded-3xl border border-slate-200">
+        Belum ada data pengurus aktif.
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal Member Detail -->
+<div id="modal-member-detail" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
+    <button onclick="closeMemberDetailModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-xl">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+    <div class="text-center pt-2">
+      <div class="inline-block bg-brand-navy text-brand-yellow font-black text-xs px-3 py-1 rounded-full uppercase mb-2" id="modal-detail-jabatan">
+        Jabatan
+      </div>
+      <h3 class="text-xl font-black text-brand-navy" id="modal-detail-nama">Nama Pengurus</h3>
+      <div class="text-xs text-slate-500 font-mono mt-0.5" id="modal-detail-nim">NIM: -</div>
+      <div class="inline-block bg-amber-50 text-amber-900 font-bold text-xs px-2.5 py-0.5 rounded-full mt-2" id="modal-detail-divisi">
+        Divisi
+      </div>
+    </div>
+    <div class="mt-5 p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-700 space-y-2">
+      <div class="font-bold text-brand-navy flex items-center gap-1.5">
+        <i class="fa-solid fa-list-check text-brand-navy"></i> Deskripsi & Tanggung Jawab:
+      </div>
+      <p id="modal-detail-bio" class="italic leading-relaxed">
+        -
+      </p>
+    </div>
+    <div class="mt-6">
+      <button onclick="closeMemberDetailModal()" class="w-full py-2.5 bg-brand-navy hover:bg-brand-navyLight text-white font-bold text-xs rounded-xl transition">
+        Tutup
+      </button>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
+{% block extra_js %}
+<script>
+  let currentZoom = 1;
+
+  function switchStrukturView(mode) {
+    const baganSec = document.getElementById('section-bagan-tree');
+    const gridSec = document.getElementById('section-grid-cards');
+    const btnBagan = document.getElementById('btn-view-bagan');
+    const btnGrid = document.getElementById('btn-view-grid');
+    const zoomControls = document.getElementById('bagan-zoom-controls');
+
+    if (mode === 'bagan') {
+      baganSec.classList.remove('hidden');
+      gridSec.classList.add('hidden');
+      zoomControls.classList.remove('hidden');
+      btnBagan.classList.add('bg-brand-navy', 'text-white', 'shadow-sm');
+      btnBagan.classList.remove('text-slate-600');
+      btnGrid.classList.remove('bg-brand-navy', 'text-white', 'shadow-sm');
+      btnGrid.classList.add('text-slate-600');
+    } else {
+      baganSec.classList.add('hidden');
+      gridSec.classList.remove('hidden');
+      zoomControls.classList.add('hidden');
+      btnGrid.classList.add('bg-brand-navy', 'text-white', 'shadow-sm');
+      btnGrid.classList.remove('text-slate-600');
+      btnBagan.classList.remove('bg-brand-navy', 'text-white', 'shadow-sm');
+      btnBagan.classList.add('text-slate-600');
+    }
+  }
+
+  function zoomBagan(delta) {
+    currentZoom = Math.max(0.6, Math.min(1.4, currentZoom + delta));
+    const container = document.getElementById('bagan-chart-container');
+    if (container) {
+      container.style.transform = `scale(${currentZoom})`;
+    }
+    const label = document.getElementById('zoom-level-text');
+    if (label) {
+      label.textContent = `${Math.round(currentZoom * 100)}%`;
+    }
+  }
+
+  function resetZoomBagan() {
+    currentZoom = 1;
+    const container = document.getElementById('bagan-chart-container');
+    if (container) {
+      container.style.transform = 'scale(1)';
+    }
+    const label = document.getElementById('zoom-level-text');
+    if (label) {
+      label.textContent = '100%';
+    }
+  }
+
+  function openMemberDetailModal(nama, jabatan, divisi, nim, bio) {
+    document.getElementById('modal-detail-nama').textContent = nama || '-';
+    document.getElementById('modal-detail-jabatan').textContent = jabatan || '-';
+    document.getElementById('modal-detail-divisi').textContent = divisi || '-';
+    document.getElementById('modal-detail-nim').textContent = 'NIM: ' + (nim || '-');
+    document.getElementById('modal-detail-bio').textContent = bio ? `"${bio}"` : 'Pengurus aktif berkomitmen menjalankan fungsi organisasi secara profesional dan akuntabel.';
+    document.getElementById('modal-member-detail').classList.remove('hidden');
+  }
+
+  function closeMemberDetailModal() {
+    document.getElementById('modal-member-detail').classList.add('hidden');
+  }
+</script>
+{% endblock %}

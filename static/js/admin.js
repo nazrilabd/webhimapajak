@@ -1086,6 +1086,12 @@
       formData.append('jabatan', document.getElementById('str-jabatan').value);
       formData.append('bio', document.getElementById('str-bio').value);
       formData.append('periode_id', document.getElementById('str-periode').value);
+      const levelEl = document.getElementById('str-level');
+      if (levelEl) formData.append('level', levelEl.value);
+      const parentEl = document.getElementById('str-parent');
+      if (parentEl) formData.append('parent_id', parentEl.value);
+      const urutanEl = document.getElementById('str-urutan');
+      if (urutanEl) formData.append('urutan', urutanEl.value);
       const foto = document.getElementById('str-foto');
       if (foto && foto.files[0]) formData.append('foto', foto.files[0]);
 
@@ -1106,7 +1112,7 @@
       }
     }
 
-    function openEditStrukturModal(id, nama, nim, divisi, jabatan, urutan, bio, periodeId) {
+    function openEditStrukturModal(id, nama, nim, divisi, jabatan, urutan, bio, periodeId, level, parentId, tipePosisi) {
       document.getElementById('edit-str-id').value = id;
       document.getElementById('edit-str-nama').value = nama;
       document.getElementById('edit-str-nim').value = nim;
@@ -1116,6 +1122,12 @@
       document.getElementById('edit-str-bio').value = bio || '';
       if (periodeId) {
         document.getElementById('edit-str-periode').value = periodeId;
+      }
+      const levelEl = document.getElementById('edit-str-level');
+      if (levelEl && level) levelEl.value = level;
+      const parentEl = document.getElementById('edit-str-parent');
+      if (parentEl) {
+        parentEl.value = (parentId && parentId !== 'None') ? parentId : '0';
       }
       const preview = document.getElementById('edit-str-foto-preview');
       const imgEl = document.getElementById('str-foto-img-' + id);
@@ -1138,6 +1150,10 @@
       formData.append('urutan', document.getElementById('edit-str-urutan').value);
       formData.append('bio', document.getElementById('edit-str-bio').value);
       formData.append('periode_id', document.getElementById('edit-str-periode').value);
+      const levelEl = document.getElementById('edit-str-level');
+      if (levelEl) formData.append('level', levelEl.value);
+      const parentEl = document.getElementById('edit-str-parent');
+      if (parentEl) formData.append('parent_id', parentEl.value);
       const foto = document.getElementById('edit-str-foto');
       if (foto && foto.files[0]) formData.append('foto', foto.files[0]);
 
@@ -1885,7 +1901,251 @@
 
     // Initialize Chart.js
     window.addEventListener('DOMContentLoaded', () => {
-      // 1. Chart Divisi Admin (Doughnut)
+      const dashData = window.DASHBOARD_CHARTS_DATA || {};
+
+      // 1. Chart G-Form: Respon per Formulir (Bar)
+      const ctxGform = document.getElementById('chartGformRespon');
+      if (ctxGform && dashData.gform) {
+        new Chart(ctxGform, {
+          type: 'bar',
+          data: {
+            labels: dashData.gform.labels || ['Formulir'],
+            datasets: [{
+              label: 'Pendaftar / Respon Terverifikasi',
+              data: dashData.gform.counts || [0],
+              backgroundColor: '#3B82F6',
+              borderRadius: 8,
+              maxBarThickness: 36
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f1f5f9' } },
+              x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+            },
+            plugins: {
+              legend: { display: false }
+            }
+          }
+        });
+      }
+
+      // 2. Chart G-Form: Kategori Formulir (Doughnut)
+      const ctxGformKat = document.getElementById('chartGformKategori');
+      if (ctxGformKat && dashData.gform) {
+        new Chart(ctxGformKat, {
+          type: 'doughnut',
+          data: {
+            labels: dashData.gform.kategori_labels || ['Brevet', 'Relawan', 'Event'],
+            datasets: [{
+              data: dashData.gform.kategori_counts || [0, 0, 0],
+              backgroundColor: ['#2563EB', '#F59E0B', '#10B981', '#8B5CF6', '#EC4899'],
+              borderWidth: 2,
+              borderColor: '#ffffff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } }
+            }
+          }
+        });
+      }
+
+      // 3. Chart Aspirasi Dashboard: Status (Doughnut)
+      const ctxAspDashSt = document.getElementById('chartAspirasiStatusDash');
+      if (ctxAspDashSt && dashData.aspirasi) {
+        new Chart(ctxAspDashSt, {
+          type: 'doughnut',
+          data: {
+            labels: dashData.aspirasi.status_labels || ['Menunggu', 'Diproses', 'Ditindaklanjuti', 'Selesai'],
+            datasets: [{
+              data: dashData.aspirasi.status_counts || [0, 0, 0, 0],
+              backgroundColor: ['#F59E0B', '#3B82F6', '#8B5CF6', '#10B981'],
+              borderWidth: 2,
+              borderColor: '#ffffff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { boxWidth: 8, font: { size: 9 } } }
+            }
+          }
+        });
+      }
+
+      // 4. Chart Aspirasi Dashboard: Kategori (Bar)
+      const ctxAspDashKat = document.getElementById('chartAspirasiKategoriDash');
+      if (ctxAspDashKat && dashData.aspirasi) {
+        new Chart(ctxAspDashKat, {
+          type: 'bar',
+          data: {
+            labels: dashData.aspirasi.kategori_labels || ['Fasilitas', 'Akademik', 'Ormawa'],
+            datasets: [{
+              label: 'Jumlah Suara',
+              data: dashData.aspirasi.kategori_counts || [0, 0, 0],
+              backgroundColor: '#8B5CF6',
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f1f5f9' } },
+              x: { grid: { display: false }, ticks: { font: { size: 9 } } }
+            },
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
+
+      // 5. Chart Aspirasi Dashboard: Anonim vs Identitas (Pie)
+      const ctxAspDashAnon = document.getElementById('chartAspirasiAnonimDash');
+      if (ctxAspDashAnon && dashData.aspirasi) {
+        new Chart(ctxAspDashAnon, {
+          type: 'pie',
+          data: {
+            labels: dashData.aspirasi.rasio_labels || ['Anonim', 'Identitas'],
+            datasets: [{
+              data: dashData.aspirasi.rasio_counts || [0, 0],
+              backgroundColor: ['#7C3AED', '#38BDF8'],
+              borderWidth: 2,
+              borderColor: '#ffffff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { boxWidth: 8, font: { size: 9 } } }
+            }
+          }
+        });
+      }
+
+      // 6. Chart Aspirasi Dashboard: Rating (Horizontal Bar)
+      const ctxAspDashRat = document.getElementById('chartAspirasiRatingDash');
+      if (ctxAspDashRat && dashData.aspirasi) {
+        new Chart(ctxAspDashRat, {
+          type: 'bar',
+          data: {
+            labels: ['⭐ 1', '⭐ 2', '⭐ 3', '⭐ 4', '⭐ 5'],
+            datasets: [{
+              label: 'Responden',
+              data: dashData.aspirasi.rating_counts || [0, 0, 0, 0, 0],
+              backgroundColor: ['#EF4444', '#F97316', '#FBBF24', '#34D399', '#059669'],
+              borderRadius: 4
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f1f5f9' } },
+              y: { grid: { display: false } }
+            },
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
+
+      // 7. Chart Kas Admin (Bar Arus Kas)
+      const ctxKas = document.getElementById('chartKasAdmin');
+      if (ctxKas) {
+        const kasData = window.KAS_CHART_DATA || {};
+        new Chart(ctxKas, {
+          type: 'bar',
+          data: {
+            labels: kasData.labels || ['Buku Kas'],
+            datasets: [
+              {
+                label: 'Kas Masuk',
+                data: kasData.masuk || [0],
+                backgroundColor: '#10B981',
+                borderRadius: 4
+              },
+              {
+                label: 'Kas Keluar',
+                data: kasData.keluar || [0],
+                backgroundColor: '#EF4444',
+                borderRadius: 4
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+              x: { grid: { display: false } }
+            },
+            plugins: {
+              legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } }
+            }
+          }
+        });
+      }
+
+      // 8. Chart Kegiatan / Proker Admin (Doughnut Status Proker)
+      const ctxKeg = document.getElementById('chartKegiatanAdmin');
+      if (ctxKeg) {
+        const prokerData = (dashData.proker) ? dashData.proker : { labels: ['Rencana', 'Berjalan', 'Selesai'], counts: [3, 2, 5] };
+        new Chart(ctxKeg, {
+          type: 'doughnut',
+          data: {
+            labels: prokerData.labels,
+            datasets: [{
+              data: prokerData.counts,
+              backgroundColor: ['#94A3B8', '#3B82F6', '#10B981'],
+              borderWidth: 2,
+              borderColor: '#ffffff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } }
+            }
+          }
+        });
+      }
+
+      // 9. Chart Demografi Angkatan (Bar)
+      const ctxDem = document.getElementById('chartDemografiAngkatan');
+      if (ctxDem && dashData.demografi) {
+        new Chart(ctxDem, {
+          type: 'bar',
+          data: {
+            labels: dashData.demografi.angkatan_labels.map(l => 'Angkatan ' + l),
+            datasets: [{
+              label: 'Mahasiswa',
+              data: dashData.demografi.angkatan_counts,
+              backgroundColor: '#002B5C',
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: { beginAtZero: true, ticks: { stepSize: 5 }, grid: { color: '#f1f5f9' } },
+              x: { grid: { display: false }, ticks: { font: { size: 9 } } }
+            },
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
+
+      // 10. Legacy Charts on specific sub-pages if present
       const ctxDiv = document.getElementById('chartDivisiAdmin');
       if (ctxDiv) {
         new Chart(ctxDiv, {
@@ -1909,73 +2169,9 @@
         });
       }
 
-      // 2. Chart Kegiatan Admin (Bar)
-      const ctxKeg = document.getElementById('chartKegiatanAdmin');
-      if (ctxKeg) {
-        new Chart(ctxKeg, {
-          type: 'bar',
-          data: {
-            labels: ['Sep', 'Okt', 'Nov', 'Des', 'Jan', 'Feb'],
-            datasets: [{
-              label: 'Program Terlaksana',
-              data: [1, 2, 2, 1, 1, 1],
-              backgroundColor: '#002B5C',
-              borderRadius: 6
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { stepSize: 1 } },
-              x: { grid: { display: false } }
-            },
-            plugins: { legend: { display: false } }
-          }
-        });
-      }
-
-      // 3. Chart Kas Admin (Bar Arus Kas)
-      const ctxKas = document.getElementById('chartKasAdmin');
-      if (ctxKas) {
-        new Chart(ctxKas, {
-          type: 'bar',
-          data: {
-            labels: ['Sep', 'Okt', 'Nov'],
-            datasets: [
-              {
-                label: 'Masuk (Jt)',
-                data: [40.4, 13.8, 0],
-                backgroundColor: '#10B981',
-                borderRadius: 4
-              },
-              {
-                label: 'Keluar (Jt)',
-                data: [3.45, 6.8, 6.8],
-                backgroundColor: '#EF4444',
-                borderRadius: 4
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-              x: { grid: { display: false } }
-            },
-            plugins: {
-              legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } }
-            }
-          }
-        });
-      }
-
-      // 4. Charts Aspirasi Mahasiswa
+      // Aspirasi Sub-page charts
       try {
         const aspData = window.ASPIRASI_CHART_DATA || {};
-        
-        // Status Doughnut Chart
         const ctxAspSt = document.getElementById('chartAspirasiStatus');
         if (ctxAspSt) {
           new Chart(ctxAspSt, {
@@ -1999,7 +2195,6 @@
           });
         }
 
-        // Kategori Bar Chart
         const ctxAspKat = document.getElementById('chartAspirasiKategori');
         if (ctxAspKat) {
           new Chart(ctxAspKat, {
@@ -2025,7 +2220,6 @@
           });
         }
 
-        // Rating Bar Chart
         const ctxAspRat = document.getElementById('chartAspirasiRating');
         if (ctxAspRat) {
           new Chart(ctxAspRat, {

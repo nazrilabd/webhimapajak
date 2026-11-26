@@ -12,6 +12,11 @@
           <p class="text-slate-300 text-sm mt-2 max-w-2xl">
             {{ aspirasi_config.deskripsi|default:"Sampaikan masukan untuk perbaikan fasilitas Lab Tax Center, evaluasi kinerja pengurus HIMA, atau aspirasi kurikulum akademik prodi perpajakan tanpa perlu khawatir identitas terlacak." }}
           </p>
+          <div class="mt-4 flex flex-wrap gap-3">
+            <a href="{% url 'kritik_saran_semua' %}" class="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition shadow">
+              <i class="fa-solid fa-comments"></i> Lihat Semua Kritik & Saran yang Masuk
+            </a>
+          </div>
         </div>
       </div>
 
@@ -108,10 +113,11 @@
           <!-- Feed Aspirasi Yang Masuk & Telah Ditindaklanjuti (Requirement 72, 74) -->
           <div class="lg:col-span-5 space-y-4">
             <div class="flex items-center justify-between">
-              <h3 class="font-bold text-sm text-brand-navy">Aspirasi Terkini (Feed Terbuka)</h3>
-              <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
-                <i class="fa-solid fa-check-double mr-1"></i> 78% Selesai Ditanggapi
-              </span>
+              <h3 class="font-bold text-sm text-brand-navy">Aspirasi Terkini</h3>
+              <a href="{% url 'kritik_saran_semua' %}" class="text-[11px] font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1">
+                <span>Lihat Semua Kritik & Saran</span>
+                <i class="fa-solid fa-arrow-right text-[10px]"></i>
+              </a>
             </div>
 
             <div class="space-y-3">

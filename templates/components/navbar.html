@@ -13,13 +13,7 @@
     <a href="https://wa.me/{{ profile.no_whatsapp }}?text=Halo%20Sekretariat%20{{ profile.nama_organisasi|default:'HIMA Perpajakan'|urlencode }}" target="_blank" class="text-slate-300 hover:text-brand-yellow transition flex items-center gap-1">
       <i class="fa-brands fa-whatsapp text-emerald-400"></i> <span class="hidden sm:inline">{{ profile.no_whatsapp }}</span>
     </a>
-    <span class="text-slate-600">|</span>
     {% endif %}
-    
- 
-    <a href="{% url 'login' %}" class="px-2.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-slate-300 transition">
-      <i class="fa-solid fa-arrow-right-to-bracket mr-1"></i> Login
-    </a>
   </div>
 </div>
 
@@ -30,15 +24,21 @@
       
       <!-- Logo HIMA Perpajakan -->
       <a href="{% url 'home' %}" class="flex items-center gap-3 group shrink-0">
+        {% if profile.get_logo %}
+        <div class="w-11 h-11 rounded-xl overflow-hidden flex items-center justify-center bg-white/10 border border-white/20 shadow-md group-hover:scale-105 transition p-1">
+          <img src="{{ profile.get_logo }}" alt="{{ profile.nama_organisasi }}" class="w-full h-full object-contain">
+        </div>
+        {% else %}
         <div class="w-11 h-11 rounded-xl bg-brand-yellow flex items-center justify-center text-brand-navy font-black text-2xl shadow-md group-hover:scale-105 transition">
           <i class="fa-solid fa-scale-balanced"></i>
         </div>
+        {% endif %}
         <div>
           <div class="font-black text-base md:text-lg tracking-wider leading-tight text-white flex items-center gap-1.5">
-            HIMA <span class="text-brand-yellow">PERPAJAKAN</span>
+            {{ profile.nama_organisasi|default:"HIMA PERPAJAKAN" }}
           </div>
           <div class="text-[10px] text-slate-300 tracking-wider font-semibold uppercase">
-            UIMANDIRI &bull; Modern Ready
+            {{ profile.tagline|default:"UIMANDIRI • Modern Ready" }}
           </div>
         </div>
       </a>
@@ -111,11 +111,11 @@
 
         <!-- Dropdown: Layanan -->
         <div class="relative group">
-          <button id="nav-dropdown-layanan" class="nav-link-top {% if request.resolver_match.url_name in 'formulir,aspirasi' %}active{% endif %} px-3 py-2 rounded-lg hover:text-brand-yellow hover:bg-white/5 transition flex items-center gap-1.5">
+          <button id="nav-dropdown-layanan" class="nav-link-top {% if request.resolver_match.url_name in 'formulir,aspirasi,kritik_saran_semua,aspirasi_semua_alias' %}active{% endif %} px-3 py-2 rounded-lg hover:text-brand-yellow hover:bg-white/5 transition flex items-center gap-1.5">
             <span>Layanan</span>
             <i class="fa-solid fa-chevron-down text-[10px] group-hover:rotate-180 transition-transform duration-200"></i>
           </button>
-          <div class="absolute left-0 top-full pt-2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200 z-50 transform group-hover:translate-y-0 translate-y-1">
+          <div class="absolute left-0 top-full pt-2 w-60 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200 z-50 transform group-hover:translate-y-0 translate-y-1">
             <div class="bg-brand-navyDark border border-white/10 rounded-xl shadow-2xl p-2 space-y-1">
               <a href="{% url 'formulir' %}" id="nav-formulir" class="nav-dropdown-item {% if request.resolver_match.url_name == 'formulir' %}active{% endif %} px-3 py-2 rounded-lg text-xs font-semibold text-slate-200 hover:text-brand-yellow hover:bg-white/10 transition flex items-center gap-2.5">
                 <i class="fa-solid fa-file-signature text-brand-yellow w-4 text-center"></i>
@@ -124,6 +124,10 @@
               <a href="{% url 'aspirasi' %}" id="nav-aspirasi" class="nav-dropdown-item {% if request.resolver_match.url_name == 'aspirasi' %}active{% endif %} px-3 py-2 rounded-lg text-xs font-semibold text-slate-200 hover:text-brand-yellow hover:bg-white/10 transition flex items-center gap-2.5">
                 <i class="fa-solid fa-bullhorn text-brand-yellow w-4 text-center"></i>
                 <span>Kotak Aspirasi & Suara</span>
+              </a>
+              <a href="{% url 'kritik_saran_semua' %}" id="nav-kritik-saran" class="nav-dropdown-item {% if request.resolver_match.url_name in 'kritik_saran_semua,aspirasi_semua_alias' %}active{% endif %} px-3 py-2 rounded-lg text-xs font-semibold text-slate-200 hover:text-brand-yellow hover:bg-white/10 transition flex items-center gap-2.5">
+                <i class="fa-solid fa-comments text-brand-yellow w-4 text-center"></i>
+                <span>Semua Kritik & Saran</span>
               </a>
             </div>
           </div>
@@ -134,14 +138,6 @@
           Kontak
         </a>
       </nav>
-
-      <!-- Right Quick Actions -->
-      <div class="hidden sm:flex items-center gap-2 shrink-0">
-        <a href="{% url 'admin_dashboard' %}" class="inline-flex items-center gap-2 bg-brand-yellow hover:bg-brand-yellowHover text-brand-navy font-black text-xs uppercase px-3.5 py-2 rounded-xl shadow-md transition duration-200 transform hover:-translate-y-0.5">
-          <i class="fa-solid fa-lock text-xs"></i>
-          <span>Login</span>
-        </a>
-      </div>
 
       <!-- Mobile Hamburger Button -->
       <div class="lg:hidden flex items-center">
@@ -216,18 +212,15 @@
           <i class="fa-solid fa-bullhorn w-4 text-center text-slate-400"></i>
           <span>Kotak Aspirasi & Saran</span>
         </a>
+        <a href="{% url 'kritik_saran_semua' %}" id="mob-nav-kritik-saran" class="mobile-nav-link {% if request.resolver_match.url_name in 'kritik_saran_semua,aspirasi_semua_alias' %}active{% endif %} flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-semibold text-white hover:bg-brand-navy hover:text-brand-yellow transition">
+          <i class="fa-solid fa-comments w-4 text-center text-slate-400"></i>
+          <span>Semua Kritik & Saran</span>
+        </a>
         <a href="{% url 'kontak' %}" id="mob-nav-kontak" class="mobile-nav-link {% if request.resolver_match.url_name == 'kontak' %}active{% endif %} flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-semibold text-white hover:bg-brand-navy hover:text-brand-yellow transition">
           <i class="fa-solid fa-address-book w-4 text-center text-slate-400"></i>
           <span>Kontak & Sekretariat</span>
         </a>
       </div>
-    </div>
-
-    <!-- Quick Action Buttons -->
-    <div class="pt-2 border-t border-white/10 space-y-2">
-      <a href="{% url 'admin_dashboard' %}" class="block w-full text-center bg-brand-yellow hover:bg-brand-yellowHover text-brand-navy font-black px-4 py-2.5 rounded-xl shadow text-xs uppercase tracking-wider transition">
-        <i class="fa-solid fa-lock mr-1.5"></i> Masuk Portal Admin
-      </a>
     </div>
   </div>
 </header>

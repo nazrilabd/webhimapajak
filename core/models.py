@@ -15,6 +15,7 @@ class OrganizationProfile(models.Model):
     foto_ketua = models.ImageField(upload_to='hima/profile/', blank=True, null=True)
     foto_ketua_url = models.URLField(max_length=500, blank=True, default='https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80')
     logo = models.ImageField(upload_to='hima/profile/', blank=True, null=True)
+    logo_url = models.URLField(max_length=500, blank=True, default='')
     email = models.EmailField(default='sekretariat@himapajak-uimandiri.ac.id')
     no_whatsapp = models.CharField(max_length=30, default='6281234567890')
     instagram = models.CharField(max_length=100, default='@himapajak_uimandiri')
@@ -28,6 +29,13 @@ class OrganizationProfile(models.Model):
         if self.foto_ketua:
             return self.foto_ketua.url
         return self.foto_ketua_url or 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'
+
+    def get_logo(self):
+        if self.logo:
+            return self.logo.url
+        if hasattr(self, 'logo_url') and self.logo_url:
+            return self.logo_url
+        return ''
 
 
 class ArsipPeriode(models.Model):
@@ -76,6 +84,15 @@ class PengurusStruktur(models.Model):
         null=True,
         blank=True
     )
+    parent = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='subordinates'
+    )
+    level = models.PositiveIntegerField(default=1)  # 1: Ketua/Pimpinan, 2: BPH, 3: Kepala Divisi, 4: Staf/Anggota
+    tipe_posisi = models.CharField(max_length=50, default='utama', blank=True)
     nama = models.CharField(max_length=150)
     nim = models.CharField(max_length=30)
     divisi = models.CharField(max_length=100, default='BPH')
@@ -87,7 +104,7 @@ class PengurusStruktur(models.Model):
     aktif = models.BooleanField(default=True)
 
     class Meta:
-        ordering = ['urutan', 'id']
+        ordering = ['level', 'urutan', 'id']
 
     def __str__(self):
         p_str = f" ({self.periode.tahun_periode})" if self.periode else ""
@@ -471,7 +488,7 @@ class AspirasiMahasiswa(models.Model):
     jawaban_tambahan = models.JSONField(default=dict, blank=True)
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='Pending')
     tanggapan_admin = models.TextField(blank=True, default='')
-    is_public = models.BooleanField(default=False)
+    is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

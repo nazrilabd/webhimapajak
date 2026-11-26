@@ -1,110 +1,311 @@
 {% extends 'admin/base.html' %}
 
-{% block title %}Dashboard & Statistik Organisasi - HIMA PERPAJAKAN UIMANDIRI{% endblock %}
+{% block title %}Dashboard & Statistik Terpadu - HIMA PERPAJAKAN UIMANDIRI{% endblock %}
 
 {% block page_heading %}Dashboard & Statistik Organisasi{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-<!-- Banner Sambutan -->
-        <div class="bg-gradient-to-r from-brand-navy to-brand-navyLight text-white rounded-3xl p-6 sm:p-8 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div class="space-y-2">
-            <div class="inline-flex items-center gap-1.5 bg-brand-yellow text-brand-navy text-[10px] font-black px-3 py-0.5 rounded uppercase">
-              <i class="fa-solid fa-scale-balanced"></i> Portal Resmi HIMA Perpajakan UIMANDIRI
-            </div>
-            <h2 class="text-xl sm:text-2xl font-black">Panel Pengelolaan Konten & Keuangan Transparan</h2>
-            <p class="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
-              Pantau arus kas saldo ormawa, kelola formulir brevet & relawan pajak, serta atur data anggota dan kegiatan terintegrasi Cloudinary dan Neon PostgreSQL.
-            </p>
+<div class="space-y-8">
+  <!-- Banner Sambutan -->
+  <div class="bg-gradient-to-r from-brand-navy via-brand-navyLight to-blue-950 text-white rounded-3xl p-6 sm:p-8 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+    <div class="space-y-2 z-10">
+      <div class="inline-flex items-center gap-1.5 bg-brand-yellow text-brand-navy text-[10px] font-black px-3 py-0.5 rounded uppercase shadow-sm">
+        <i class="fa-solid fa-chart-line"></i> Dashboard Statistik & Analisis Terpadu
+      </div>
+      <h2 class="text-xl sm:text-2xl font-black">Pusat Kendali Informasi, Partisipasi & Anggaran</h2>
+      <p class="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
+        Pantau performa formulir online (Google Form style), responsivitas penanganan kritik & saran mahasiswa, realisasi program kerja, dan arus kas keuangan secara terintegrasi real-time.
+      </p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2.5 z-10">
+      <a href="{% url 'admin_anggaran' %}" class="bg-brand-yellow hover:bg-brand-yellowHover text-brand-navy font-black text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
+        <i class="fa-solid fa-coins"></i> Buku Kas Bendahara
+      </a>
+      <a href="{% url 'admin_formulir' %}" class="bg-white/10 hover:bg-white/20 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 border border-white/20">
+        <i class="fa-solid fa-plus"></i> Buat Form Baru
+      </a>
+    </div>
+  </div>
+
+  <!-- 6 Top Metrics Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+    <!-- 1. Total Mahasiswa -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] font-bold text-slate-400 uppercase">Mahasiswa Pajak</span>
+        <div class="w-8 h-8 rounded-lg bg-amber-50 text-brand-navy flex items-center justify-center text-sm">
+          <i class="fa-solid fa-user-graduate"></i>
+        </div>
+      </div>
+      <div class="mt-2">
+        <div class="text-2xl font-black text-brand-navy">{{ kpi.total_mahasiswa|default:kpi.total_anggota }}</div>
+        <div class="text-[10px] text-emerald-600 font-bold mt-0.5">{{ kpi.total_mahasiswa_aktif }} Aktif &bull; {{ kpi.total_alumni }} Alumni</div>
+      </div>
+    </div>
+
+    <!-- 2. Sisa Kas -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] font-bold text-slate-400 uppercase">Saldo Kas HIMA</span>
+        <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center text-sm">
+          <i class="fa-solid fa-wallet"></i>
+        </div>
+      </div>
+      <div class="mt-2">
+        <div class="text-xl font-black text-emerald-600 truncate" title="Rp {{ kpi.saldo_kas|floatformat:0 }}">Rp {{ kpi.saldo_kas|floatformat:0 }}</div>
+        <div class="text-[10px] text-slate-500 font-semibold mt-0.5">Masuk: Rp {{ kpi.total_masuk|floatformat:0 }}</div>
+      </div>
+    </div>
+
+    <!-- 3. Total Respon G-Form -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] font-bold text-slate-400 uppercase">Respon Formulir</span>
+        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-800 flex items-center justify-center text-sm">
+          <i class="fa-solid fa-file-signature"></i>
+        </div>
+      </div>
+      <div class="mt-2">
+        <div class="text-2xl font-black text-brand-navy">{{ kpi.total_respon }}</div>
+        <div class="text-[10px] text-blue-600 font-bold mt-0.5">Dari {{ kpi.total_formulir }} formulir aktif</div>
+      </div>
+    </div>
+
+    <!-- 4. Kritik & Saran -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] font-bold text-slate-400 uppercase">Kritik & Saran</span>
+        <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-800 flex items-center justify-center text-sm">
+          <i class="fa-solid fa-comments"></i>
+        </div>
+      </div>
+      <div class="mt-2">
+        <div class="text-2xl font-black text-purple-800">{{ aspirasi_list.count }}</div>
+        <div class="text-[10px] text-amber-600 font-bold mt-0.5">{{ kpi.aspirasi_pending }} Perlu Tanggapan</div>
+      </div>
+    </div>
+
+    <!-- 5. Indeks Kepuasan -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] font-bold text-slate-400 uppercase">Indeks Kepuasan</span>
+        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-sm">
+          <i class="fa-solid fa-star"></i>
+        </div>
+      </div>
+      <div class="mt-2">
+        <div class="text-2xl font-black text-amber-500 flex items-center gap-1">
+          <span>{{ asp_avg_rating }}</span>
+          <span class="text-xs text-slate-400 font-normal">/ 5.0</span>
+        </div>
+        <div class="text-[10px] text-slate-500 font-medium mt-0.5">Survei Aspirasi</div>
+      </div>
+    </div>
+
+    <!-- 6. Realisasi Proker -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] font-bold text-slate-400 uppercase">Program Kerja</span>
+        <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center text-sm">
+          <i class="fa-solid fa-calendar-check"></i>
+        </div>
+      </div>
+      <div class="mt-2">
+        <div class="text-2xl font-black text-brand-navy">{{ proker_list.count }}</div>
+        <div class="text-[10px] text-emerald-600 font-bold mt-0.5">Brevet & Kegiatan Ormawa</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SECTION 1: GRAFIK DATA FORMULIR ONLINE (G-FORM) ==================== -->
+  <div class="space-y-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="text-base font-black text-brand-navy flex items-center gap-2">
+          <span class="w-6 h-6 rounded-lg bg-blue-100 text-blue-900 flex items-center justify-center text-xs">
+            <i class="fa-solid fa-file-lines"></i>
+          </span>
+          Statistik & Analisis Formulir Online (G-Form Style)
+        </h3>
+        <p class="text-xs text-slate-400">Pantau persebaran respon pendaftar brevet, relawan pajak, dan pendaftaran event.</p>
+      </div>
+      <a href="{% url 'admin_formulir' %}" class="text-xs font-bold text-blue-700 hover:underline flex items-center gap-1">
+        <span>Kelola Formulir</span>
+        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+      </a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Bar Chart: Respon per Formulir -->
+      <div class="lg:col-span-8 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <h4 class="font-black text-sm text-brand-navy">Jumlah Respon Pendaftar per Formulir</h4>
+            <p class="text-[11px] text-slate-400">Pendaftar tersimpan di Neon PostgreSQL</p>
           </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <button onclick="switchTab('anggaran')" class="bg-brand-yellow hover:bg-brand-yellowHover text-brand-navy font-black text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
-              <i class="fa-solid fa-coins"></i> Buku Kas Bendahara
-            </button>
-            <button onclick="openFormBuilderModal()" class="bg-white/10 hover:bg-white/20 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 border border-white/20">
-              <i class="fa-solid fa-plus"></i> Buat Form Baru
-            </button>
+          <span class="text-[10px] bg-blue-50 text-blue-800 font-bold px-2 py-0.5 rounded">Bar Chart</span>
+        </div>
+        <div class="h-64 relative">
+          <canvas id="chartGformRespon"></canvas>
+        </div>
+      </div>
+
+      <!-- Doughnut Chart: Respon per Kategori Form -->
+      <div class="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <h4 class="font-black text-sm text-brand-navy">Proporsi Kategori Formulir</h4>
+              <p class="text-[11px] text-slate-400">Distribusi respon per jenis event</p>
+            </div>
+            <span class="text-[10px] bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded">Doughnut</span>
+          </div>
+          <div class="h-56 relative">
+            <canvas id="chartGformKategori"></canvas>
           </div>
         </div>
-
-        <!-- 4 KPI Metrics -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          
-          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-            <div>
-              <div class="text-[11px] font-bold text-slate-400 uppercase">Total Mahasiswa Pajak</div>
-              <div class="text-2xl sm:text-3xl font-black text-brand-navy mt-1">{{ kpi.total_mahasiswa|default:kpi.total_anggota }}</div>
-              <div class="text-[11px] text-emerald-600 font-bold mt-1 flex items-center gap-1.5">
-                <span class="inline-flex items-center gap-1"><i class="fa-solid fa-circle-check"></i> {{ kpi.total_mahasiswa_aktif }} Aktif</span>
-                <span>&bull;</span>
-                <span class="inline-flex items-center gap-1 text-blue-600"><i class="fa-solid fa-graduation-cap"></i> {{ kpi.total_alumni }} Alumni</span>
-              </div>
-            </div>
-            <div class="w-12 h-12 rounded-xl bg-amber-50 text-brand-navy flex items-center justify-center text-xl">
-              <i class="fa-solid fa-user-graduate text-brand-navy"></i>
-            </div>
-          </div>
-
-          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-            <div>
-              <div class="text-[11px] font-bold text-slate-400 uppercase">Sisa Saldo Kas HIMA</div>
-              <div class="text-xl sm:text-2xl font-black text-emerald-600 mt-1">Rp {{ kpi.saldo_kas|floatformat:0 }}</div>
-              <div class="text-[11px] text-slate-500 font-semibold mt-1">
-                Masuk: Rp {{ kpi.total_masuk|floatformat:0 }}
-              </div>
-            </div>
-            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-xl">
-              <i class="fa-solid fa-wallet"></i>
-            </div>
-          </div>
-
-          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-            <div>
-              <div class="text-[11px] font-bold text-slate-400 uppercase">Pendaftar Brevet & Event</div>
-              <div class="text-2xl sm:text-3xl font-black text-brand-navy mt-1">{{ kpi.total_respon }}</div>
-              <div class="text-[11px] text-blue-600 font-bold mt-1">
-                <i class="fa-solid fa-circle-check"></i> Dari {{ kpi.total_formulir }} formulir
-              </div>
-            </div>
-            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-800 flex items-center justify-center text-xl">
-              <i class="fa-solid fa-file-pen"></i>
-            </div>
-          </div>
-
-          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-            <div>
-              <div class="text-[11px] font-bold text-slate-400 uppercase">Aspirasi Mahasiswa</div>
-              <div class="text-2xl sm:text-3xl font-black text-purple-700 mt-1">{{ kpi.aspirasi_pending }}</div>
-              <div class="text-[11px] text-purple-600 font-bold mt-1">
-                <i class="fa-solid fa-shield"></i> Perlu Ditanggapi
-              </div>
-            </div>
-            <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-800 flex items-center justify-center text-xl">
-              <i class="fa-solid fa-comment-dots"></i>
-            </div>
-          </div>
-
+        <div class="pt-3 border-t border-slate-100 text-center text-[11px] text-slate-500">
+          Total <strong>{{ kpi.total_respon }}</strong> respon pendaftar berhasil diverifikasi.
         </div>
+      </div>
+    </div>
+  </div>
 
-        <!-- 3 Charts Section -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-            <h3 class="font-bold text-sm text-brand-navy">Proporsi Anggota per Divisi</h3>
-            <p class="text-[11px] text-slate-400 mb-3">Distribusi 5 bidang kepengurusan</p>
-            <div class="h-56 relative"><canvas id="chartDivisiAdmin"></canvas></div>
+  <!-- ==================== SECTION 2: GRAFIK KRITIK, SARAN & ASPIRASI MAHASISWA ==================== -->
+  <div class="space-y-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="text-base font-black text-brand-navy flex items-center gap-2">
+          <span class="w-6 h-6 rounded-lg bg-purple-100 text-purple-900 flex items-center justify-center text-xs">
+            <i class="fa-solid fa-bullhorn"></i>
+          </span>
+          Statistik & Analisis Kritik, Saran & Aspirasi Mahasiswa
+        </h3>
+        <p class="text-xs text-slate-400">Analisis sentimen, status respon pengurus, dan kategori masukan anonim dari mahasiswa.</p>
+      </div>
+      <a href="{% url 'admin_aspirasi' %}" class="text-xs font-bold text-purple-700 hover:underline flex items-center gap-1">
+        <span>Buka Kotak Aspirasi</span>
+        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+      </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- Chart 1: Status Penanganan -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-black text-xs text-brand-navy uppercase tracking-wider">Status Tanggapan</h4>
+            <span class="text-[10px] bg-purple-50 text-purple-800 font-bold px-2 py-0.5 rounded">Doughnut</span>
           </div>
-
-          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-            <h3 class="font-bold text-sm text-brand-navy">Realisasi Program Kerja Bulanan</h3>
-            <p class="text-[11px] text-slate-400 mb-3">Proker terlaksana vs rencana</p>
-            <div class="h-56 relative"><canvas id="chartKegiatanAdmin"></canvas></div>
-          </div>
-
-          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-            <h3 class="font-bold text-sm text-brand-navy">Arus Kas Masuk vs Keluar</h3>
-            <p class="text-[11px] text-slate-400 mb-3">Pemasukan & belanja bulanan (Juta Rp)</p>
-            <div class="h-56 relative"><canvas id="chartKasAdmin"></canvas></div>
+          <p class="text-[11px] text-slate-400 mb-2">Pending vs Telah Selesai</p>
+          <div class="h-52 relative">
+            <canvas id="chartAspirasiStatusDash"></canvas>
           </div>
         </div>
+      </div>
+
+      <!-- Chart 2: Kategori Aspirasi -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-black text-xs text-brand-navy uppercase tracking-wider">Bidang / Kategori</h4>
+            <span class="text-[10px] bg-purple-50 text-purple-800 font-bold px-2 py-0.5 rounded">Bar</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mb-2">Topik paling sering diaspirasikan</p>
+          <div class="h-52 relative">
+            <canvas id="chartAspirasiKategoriDash"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart 3: Rasio Anonim vs Identitas -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-black text-xs text-brand-navy uppercase tracking-wider">Anonimitas Pengirim</h4>
+            <span class="text-[10px] bg-purple-50 text-purple-800 font-bold px-2 py-0.5 rounded">Pie</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mb-2">Proporsi rahasia vs identitas</p>
+          <div class="h-52 relative">
+            <canvas id="chartAspirasiAnonimDash"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart 4: Rating Bintang Kepuasan -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-black text-xs text-brand-navy uppercase tracking-wider">Rating Kepuasan (1-5)</h4>
+            <span class="text-[10px] bg-amber-50 text-amber-800 font-bold px-2 py-0.5 rounded">Horizontal</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mb-2">Rata-rata: {{ asp_avg_rating }} dari 5.0 bintang</p>
+          <div class="h-52 relative">
+            <canvas id="chartAspirasiRatingDash"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SECTION 3: GRAFIK KAS, PROKER & DEMOGRAFI ==================== -->
+  <div class="space-y-4">
+    <div>
+      <h3 class="text-base font-black text-brand-navy flex items-center gap-2">
+        <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-900 flex items-center justify-center text-xs">
+          <i class="fa-solid fa-scale-balanced"></i>
+        </span>
+        Keuangan, Program Kerja & Demografi Mahasiswa
+      </h3>
+      <p class="text-xs text-slate-400">Transparansi arus kas, realisasi kegiatan, dan data mahasiswa perpajakan.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Arus Kas -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between mb-1">
+          <h4 class="font-bold text-sm text-brand-navy">Arus Kas Masuk vs Keluar</h4>
+          <span class="text-[10px] bg-emerald-50 text-emerald-800 font-bold px-2 py-0.5 rounded">Keuangan</span>
+        </div>
+        <p class="text-[11px] text-slate-400 mb-3">Pemasukan & belanja bulanan (Juta Rp)</p>
+        <div class="h-56 relative">
+          <canvas id="chartKasAdmin"></canvas>
+        </div>
+      </div>
+
+      <!-- Realisasi Proker -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between mb-1">
+          <h4 class="font-bold text-sm text-brand-navy">Status Program Kerja</h4>
+          <span class="text-[10px] bg-indigo-50 text-indigo-800 font-bold px-2 py-0.5 rounded">Ormawa</span>
+        </div>
+        <p class="text-[11px] text-slate-400 mb-3">Rencana, Berjalan, vs Terlaksana</p>
+        <div class="h-56 relative">
+          <canvas id="chartKegiatanAdmin"></canvas>
+        </div>
+      </div>
+
+      <!-- Demografi Angkatan -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between mb-1">
+          <h4 class="font-bold text-sm text-brand-navy">Mahasiswa per Angkatan</h4>
+          <span class="text-[10px] bg-amber-50 text-amber-800 font-bold px-2 py-0.5 rounded">Akademik</span>
+        </div>
+        <p class="text-[11px] text-slate-400 mb-3">Persebaran mahasiswa & alumni</p>
+        <div class="h-56 relative">
+          <canvas id="chartDemografiAngkatan"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.DASHBOARD_CHARTS_DATA = {{ dashboard_charts_json|safe }};
+  window.ASPIRASI_CHART_DATA = {{ aspirasi_chart_json|safe }};
+  window.KAS_CHART_DATA = {{ kas_chart_json|safe }};
+</script>
 {% endblock %}
